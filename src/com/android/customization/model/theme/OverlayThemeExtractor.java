@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.om.OverlayInfo;
 import android.content.om.OverlayManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.graphics.Typeface;
@@ -17,6 +18,7 @@ import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.Dimension;
 import androidx.annotation.Nullable;
 
@@ -74,6 +76,19 @@ class OverlayThemeExtractor {
         }
     }
 
+    void addPrimaryOverlay(Builder builder, String primaryOverlayPackage)
+            throws NameNotFoundException {
+        
+        if (!TextUtils.isEmpty(primaryOverlayPackage)) {
+            builder.addOverlayPackage(getOverlayCategory(primaryOverlayPackage),
+                    primaryOverlayPackage)
+                    .setColorPrimary(loadColor(ResourceConstants.PRIMARY_COLOR_NAME,
+                            primaryOverlayPackage));
+        } else {
+            addSystemDefaultPrimary(builder);
+        }
+    }
+
     void addShapeOverlay(Builder builder, String shapeOverlayPackage)
             throws NameNotFoundException {
         addShapeOverlay(builder, shapeOverlayPackage, true);
@@ -85,9 +100,7 @@ class OverlayThemeExtractor {
             builder.addOverlayPackage(getOverlayCategory(shapeOverlayPackage),
                     shapeOverlayPackage)
                     .setShapePath(
-                            loadString(ResourceConstants.CONFIG_ICON_MASK, shapeOverlayPackage))
-                    .setBottomSheetCornerRadius(
-                            loadDimen(ResourceConstants.CONFIG_CORNERRADIUS, shapeOverlayPackage));
+                            loadString(ResourceConstants.CONFIG_ICON_MASK, shapeOverlayPackage));
         } else {
             addSystemDefaultShape(builder);
         }
@@ -135,12 +148,12 @@ class OverlayThemeExtractor {
     void addIconOverlay(Builder builder, String packageName, String... previewIcons)
             throws NameNotFoundException {
         builder.addOverlayPackage(getOverlayCategory(packageName), packageName);
-        try {
-            for (String iconName : previewIcons) {
+        for (String iconName : previewIcons) {
+            try {
                 builder.addIcon(loadIconPreviewDrawable(iconName, packageName, false));
+            } catch (NameNotFoundException | NotFoundException e) {
+                Log.w(TAG, "Didn't find overlay icon " + iconName);
             }
-        } catch (NameNotFoundException | NotFoundException e) {
-            Log.w(TAG, "Didn't find overlay icons, will skip preview", e);
         }
     }
 
@@ -154,7 +167,10 @@ class OverlayThemeExtractor {
                             fontOverlayPackage))
                     .setHeadlineFontFamily(loadTypeface(
                             ResourceConstants.CONFIG_HEADLINE_FONT_FAMILY,
-                            fontOverlayPackage));
+                            fontOverlayPackage))
+                    .setFontName(mContext.getPackageManager()
+                        .getPackageInfo(fontOverlayPackage, 0)
+                        .applicationInfo.loadLabel(mContext.getPackageManager()).toString());
         } else {
             addSystemDefaultFont(builder);
         }
@@ -162,12 +178,12 @@ class OverlayThemeExtractor {
 
     void addSystemDefaultIcons(Builder builder, String packageName,
             String... previewIcons) {
-        try {
-            for (String iconName : previewIcons) {
+        for (String iconName : previewIcons) {
+            try {
                 builder.addIcon(loadIconPreviewDrawable(iconName, packageName, true));
+            } catch (NameNotFoundException | NotFoundException e) {
+                Log.d(TAG, "Didn't find android package icon " + iconName);
             }
-        } catch (NameNotFoundException | NotFoundException e) {
-            Log.w(TAG, "Didn't find android package icons, will skip preview", e);
         }
     }
 
@@ -176,11 +192,7 @@ class OverlayThemeExtractor {
         String iconMaskPath = system.getString(
                 system.getIdentifier(ResourceConstants.CONFIG_ICON_MASK,
                         "string", ResourceConstants.ANDROID_PACKAGE));
-        builder.setShapePath(iconMaskPath)
-                .setBottomSheetCornerRadius(
-                        system.getDimensionPixelOffset(
-                                system.getIdentifier(ResourceConstants.CONFIG_CORNERRADIUS,
-                                        "dimen", ResourceConstants.ANDROID_PACKAGE)));
+        builder.setShapePath(iconMaskPath);
     }
 
     void addSystemDefaultColor(Builder builder) {
@@ -196,6 +208,22 @@ class OverlayThemeExtractor {
         builder.setColorAccentDark(colorAccentDark);
     }
 
+    void addSystemDefaultPrimary(Builder builder) {
+        @ColorInt int colorPrimary = getSystemDefaultPrimary();
+        builder.setColorPrimary(colorPrimary);
+    }
+
+    @ColorInt int getSystemDefaultPrimary() {
+        Configuration configuration = mContext.getResources().getConfiguration();
+        boolean nightMode = (configuration.uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                    == Configuration.UI_MODE_NIGHT_YES ? true : false;
+        Resources system = Resources.getSystem();
+        int colorPrimary = system.getColor(
+                system.getIdentifier(nightMode ? ResourceConstants.PRIMARY_COLOR_DEFAULT_DARK_NAME : ResourceConstants.PRIMARY_COLOR_DEFAULT_LIGHT_NAME, "color",
+                ResourceConstants.ANDROID_PACKAGE), null);
+        return colorPrimary;
+    }
+
     void addSystemDefaultFont(Builder builder) {
         Resources system = Resources.getSystem();
         String headlineFontFamily = system.getString(system.getIdentifier(
@@ -205,7 +233,8 @@ class OverlayThemeExtractor {
                 ResourceConstants.CONFIG_BODY_FONT_FAMILY,
                 "string", ResourceConstants.ANDROID_PACKAGE));
         builder.setHeadlineFontFamily(Typeface.create(headlineFontFamily, Typeface.NORMAL))
-                .setBodyFontFamily(Typeface.create(bodyFontFamily, Typeface.NORMAL));
+                .setBodyFontFamily(Typeface.create(bodyFontFamily, Typeface.NORMAL))
+                .setFontName(mContext.getString(R.string.default_theme_title));
     }
 
     Typeface loadTypeface(String configName, String fontOverlayPackage)

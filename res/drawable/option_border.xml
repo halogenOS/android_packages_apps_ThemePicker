@@ -21,5 +21,7 @@
             <corners android:radius="4dp" />
         </shape>
     </item>
+    <item android:id="@+id/background"
+          android:drawable="@drawable/option_background" />
     <item android:drawable="@drawable/option_border_edge" />
 </ripple>

@@ -83,7 +83,7 @@ import java.util.Map;
  *  Fragments providing customization options.
  */
 public class CustomizationPickerActivity extends FragmentActivity implements WallpapersUiContainer,
-        CategoryFragmentHost, ThemeFragmentHost, GridFragmentHost, ClockFragmentHost {
+        CategoryFragmentHost, ThemeFragmentHost, GridFragmentHost, ClockFragmentHost, PermissionChangedListener {
 
     private static final String TAG = "CustomizationPickerActivity";
     private static final String WALLPAPER_FLAVOR_EXTRA = "com.android.launcher3.WALLPAPER_FLAVOR";
@@ -133,6 +133,9 @@ public class CustomizationPickerActivity extends FragmentActivity implements Wal
                     ? mBottomNav.getMenu().size() - 1 : 0;
                 navigateToSection(mBottomNav.getMenu().getItem(section).getItemId());
             }
+        }
+        if (!isReadExternalStoragePermissionGranted()) {
+            requestExternalStoragePermission(this);
         }
     }
 
@@ -230,16 +233,16 @@ public class CustomizationPickerActivity extends FragmentActivity implements Wal
     private void setUpBottomNavView() {
         mBottomNav = findViewById(R.id.main_bottom_nav);
         Menu menu = mBottomNav.getMenu();
-        DefaultCustomizationPreferences prefs =
-            new DefaultCustomizationPreferences(getApplicationContext());
+        /*DefaultCustomizationPreferences prefs =
+            new DefaultCustomizationPreferences(getApplicationContext());*/
         for (int i = menu.size() - 1; i >= 0; i--) {
             MenuItem item = menu.getItem(i);
             int id = item.getItemId();
             if (!mSections.containsKey(id)) {
                 menu.removeItem(id);
-            }  else if (!prefs.getTabVisited(getResources().getResourceName(id))) {
+            }  /*else if (!prefs.getTabVisited(getResources().getResourceName(id))) {
                 showTipDot(item);
-            }
+            }*/
         }
 
         mBottomNav.setOnNavigationItemSelectedListener(item -> {
@@ -247,7 +250,7 @@ public class CustomizationPickerActivity extends FragmentActivity implements Wal
             CustomizationSection section = mSections.get(id);
             switchFragment(section);
             section.onVisible();
-            String name = getResources().getResourceName(id);
+            /*String name = getResources().getResourceName(id);
             if (!prefs.getTabVisited(name)) {
                 prefs.setTabVisited(name);
                 hideTipDot(item);
@@ -255,7 +258,7 @@ public class CustomizationPickerActivity extends FragmentActivity implements Wal
                 if (id == R.id.nav_theme) {
                     getThemeManager().storeEmptyTheme();
                 }
-            }
+            }*/
             return true;
         });
     }
@@ -409,6 +412,14 @@ public class CustomizationPickerActivity extends FragmentActivity implements Wal
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         setResult(Activity.RESULT_OK);
         finish();
+    }
+
+    @Override
+    public void onPermissionsGranted() {
+    }
+
+    @Override
+    public void onPermissionsDenied(boolean dontAskAgain) {
     }
 
     /**

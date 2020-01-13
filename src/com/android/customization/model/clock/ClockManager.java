@@ -17,16 +17,22 @@ package com.android.customization.model.clock;
 
 import android.content.ContentResolver;
 import android.provider.Settings.Secure;
+import android.util.Log;
 
 import com.android.customization.module.ThemesUserEventLogger;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * {@link CustomizationManager} for clock faces that implements apply by writing to secure settings.
  */
 public class ClockManager extends BaseClockManager {
 
-    // TODO: use constant from Settings.Secure
-    static final String CLOCK_FACE_SETTING = "lock_screen_custom_clock_face";
+    private static final String CLOCK_FACE_SETTING = Secure.LOCK_SCREEN_CUSTOM_CLOCK_FACE;
+    private static final String CLOCK_FIELD = "clock";
+    private static final String TAG = "ClockManager";
+
     private final ContentResolver mContentResolver;
     private final ThemesUserEventLogger mEventLogger;
 
@@ -39,16 +45,50 @@ public class ClockManager extends BaseClockManager {
 
     @Override
     protected void handleApply(Clockface option, Callback callback) {
-        if (Secure.putString(mContentResolver, CLOCK_FACE_SETTING, option.getId())) {
-            mEventLogger.logClockApplied(option);
-            callback.onSuccess();
-        } else {
+        String value = toJSON(option.getId());
+        if (value == null) {
             callback.onError(null);
+        } else {
+            if (Secure.putString(mContentResolver, CLOCK_FACE_SETTING, value)) {
+                mEventLogger.logClockApplied(option);
+                callback.onSuccess();
+            } else {
+                callback.onError(null);
+            }
         }
     }
 
     @Override
     protected String lookUpCurrentClock() {
-        return Secure.getString(mContentResolver, CLOCK_FACE_SETTING);
+        String value = Secure.getString(mContentResolver, CLOCK_FACE_SETTING);
+        String id = fromJSON(value);
+        return id;
+    }
+
+    private String toJSON(String value) {
+        try {
+            JSONObject json = new JSONObject();
+            json.put(CLOCK_FIELD, value);
+            return json.toString();
+        } catch (JSONException ex) {
+            Log.e(TAG, "Failed migrating settings value to JSON format", ex);
+        }
+        return null;
+    }
+
+    private String fromJSON(String value) {
+        JSONObject json;
+        try {
+            json = new JSONObject(value);
+        } catch (JSONException ex) {
+            Log.e(TAG, "Settings value is not valid JSON", ex);
+            return value;
+        }
+        try {
+            return json.getString(CLOCK_FIELD);
+        } catch (JSONException ex) {
+            Log.e(TAG, "JSON object does not contain clock field.", ex);
+            return null;
+        }
     }
 }
