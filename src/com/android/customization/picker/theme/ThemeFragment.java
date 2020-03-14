@@ -24,7 +24,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
@@ -467,10 +466,12 @@ public class ThemeFragment extends ToolbarFragment {
                     // Disable seekbar
                     seekbar.setOnTouchListener((view, motionEvent) -> true);
 
+                    int iconFgColor = res.getColor(R.color.tile_enabled_icon_color, null);
                     for (int i = 0; i < mColorTileIds.length && i < previewInfo.icons.size();
                             i++) {
                         Drawable icon = previewInfo.icons.get(mColorTileIconIds[i][1])
                                 .getConstantState().newDrawable().mutate();
+                        icon.setTint(iconFgColor);
                         Drawable bgShape =
                                 previewInfo.shapeDrawable.getConstantState().newDrawable();
                         bgShape.setTint(accentColor);
