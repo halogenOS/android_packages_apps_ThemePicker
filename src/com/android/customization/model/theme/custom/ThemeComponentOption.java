@@ -150,17 +150,13 @@ public abstract class ThemeComponentOption implements CustomizationOption<ThemeC
             header.setText(container.getContext().getString(R.string.preview_name_font) + "\n\u0028" + mLabel + "\u0029");
             TextView bodyText = container.findViewById(R.id.font_card_body);
             bodyText.setTypeface(mBodyFont);
-            TextView bodyTextName = container.findViewById(R.id.font_card_body_name);
-            bodyTextName.setTypeface(mBodyFont);
-            bodyTextName.setText(mLabel);
             container.findViewById(R.id.font_card_divider).setBackgroundColor(
                     title.getCurrentTextColor());
         }
 
         @Override
         public Builder buildStep(Builder builder) {
-            builder.setHeadlineFontFamily(mHeadlineFont)
-                    .setBodyFontFamily(mBodyFont).setFontName(mLabel);
+            builder.setHeadlineFontFamily(mHeadlineFont).setBodyFontFamily(mBodyFont);
             return super.buildStep(builder);
         }
     }
