@@ -32,7 +32,7 @@ LOCAL_PACKAGE_NAME := ThemePicker
 LOCAL_PRIVILEGED_MODULE := true
 LOCAL_REQUIRED_MODULES += privapp_whitelist_com.android.customization.xml
 #LOCAL_PRODUCT_MODULE := true
-#LOCAL_OVERRIDES_PACKAGES := WallpaperPicker2
+LOCAL_OVERRIDES_PACKAGES := WallpaperPicker WallpaperPicker2
 LOCAL_CERTIFICATE := platform
 
 ifneq (,$(wildcard frameworks/base))

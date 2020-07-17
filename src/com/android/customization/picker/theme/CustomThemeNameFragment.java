@@ -135,7 +135,6 @@ public class CustomThemeNameFragment extends CustomThemeStepFragment {
         mCoverPage = new ThemeCoverPage(context, getThemeName(),
                 previewInfo.resolveAccentColor(getResources()),
                 previewInfo.resolvePrimaryColor(getResources()),
-                previewInfo.resolveSecondaryPrimaryColor(getResources()),
                 previewInfo.icons,
                 previewInfo.headlineFontFamily,
                 previewInfo.shapeDrawable, previewInfo.shapeAppIcons, null,
