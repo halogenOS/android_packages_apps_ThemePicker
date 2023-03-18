@@ -17,6 +17,7 @@
 <resources>
     <array name="color_bundles">
         <item>default</item>
+        <item>monochromatic</item>
         <item>bundle1</item>
         <item>bundle2</item>
         <item>bundle3</item>

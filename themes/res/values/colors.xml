@@ -31,6 +31,7 @@
     <color name="color_primary_rainbow5">#ff96cbff</color>
     <color name="color_primary_rainbow6">#ffcbbfff</color>
     <color name="color_primary_rainbow7">#fff5acfb</color>
+    <color name="color_secondary_monochromatic">#FFFF00</color>
     <color name="color_secondary_bundle1">#ff0a8758</color>
     <color name="color_secondary_bundle2">#ff746bc1</color>
     <color name="color_secondary_bundle3">#ffa66800</color>

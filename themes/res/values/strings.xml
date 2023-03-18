@@ -23,6 +23,7 @@
     <string name="rainbow_color_name_blue">Blue</string>
     <string name="rainbow_color_name_purple">Purple</string>
     <string name="rainbow_color_name_magenta">Magenta</string>
+    <string name="monochromatic_name">Monochromatic</string>
     <string name="bundle1_color_name">Carbon</string>
     <string name="bundle2_color_name">Paper</string>
     <string name="bundle3_color_name">Sun</string>
@@ -35,6 +36,7 @@
     <string name="bundle_name_rainbow5" translatable="false">@string/rainbow_color_name_blue</string>
     <string name="bundle_name_rainbow6" translatable="false">@string/rainbow_color_name_purple</string>
     <string name="bundle_name_rainbow7" translatable="false">@string/rainbow_color_name_magenta</string>
+    <string name="bundle_name_monochromatic" translatable="false">@string/monochromatic_name</string>
     <string name="bundle_name_bundle1" translatable="false">@string/bundle1_color_name</string>
     <string name="bundle_name_bundle2" translatable="false">@string/bundle2_color_name</string>
     <string name="bundle_name_bundle3" translatable="false">@string/bundle3_color_name</string>
@@ -52,6 +54,7 @@
     <string name="color_style_rainbow5" translatable="false">RAINBOW</string>
     <string name="color_style_rainbow6" translatable="false">RAINBOW</string>
     <string name="color_style_rainbow7" translatable="false">RAINBOW</string>
+    <string name="color_style_monochromatic" translatable="false">MONOCHROMATIC</string>
     <string name="color_style_fruits1" translatable="false">FRUIT_SALAD</string>
     <string name="color_style_fruits2" translatable="false">FRUIT_SALAD</string>
     <string name="color_style_fruits3" translatable="false">FRUIT_SALAD</string>
