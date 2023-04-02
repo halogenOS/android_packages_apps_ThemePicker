@@ -214,6 +214,14 @@ public final class DefaultCustomizationSections implements CustomizationSections
                 break;
         }
 
+        // App grid section.
+        sectionControllers.add(
+                new GridSectionController(
+                        GridOptionsManager.getInstance(activity),
+                        sectionNavigationController,
+                        lifecycleOwner,
+                        /* isRevampedUiEnabled= */ false));
+
         // Icon pack selection section.
         sectionControllers.add(new IconPackSectionController(
                 IconPackManager.getInstance(activity, new OverlayManagerCompat(activity)), sectionNavigationController));
