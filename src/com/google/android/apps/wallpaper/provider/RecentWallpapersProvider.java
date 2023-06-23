@@ -6,8 +6,6 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 
-import com.android.systemui.flags.FlagManager;
-
 public class RecentWallpapersProvider extends ContentProvider {
 
     @Override // android.content.ContentProvider
@@ -25,7 +23,7 @@ public class RecentWallpapersProvider extends ContentProvider {
         if (!"/list_recent".equals(uri.getPath())) {
             return null;
         }
-        MatrixCursor matrixCursor = new MatrixCursor(new String[]{FlagManager.EXTRA_ID, "placeholder_color", "component", "title"});
+        MatrixCursor matrixCursor = new MatrixCursor(new String[]{"id", "placeholder_color", "component", "title"});
         return matrixCursor;
     }
 
