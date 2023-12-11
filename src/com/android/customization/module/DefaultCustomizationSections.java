@@ -8,7 +8,6 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.android.customization.model.color.ColorSectionController;
 import com.android.customization.model.font.FontManager;
 import com.android.customization.model.font.FontSectionController;
 import com.android.customization.model.grid.GridOptionsManager;
