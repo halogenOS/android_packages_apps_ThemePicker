@@ -210,20 +210,21 @@ public final class DefaultCustomizationSections implements CustomizationSections
                                 sectionNavigationController,
                                 lifecycleOwner,
                                 /* isRevampedUiEnabled= */ true));
+
+                // Icon pack selection section.
+                sectionControllers.add(new IconPackSectionController(
+                        IconPackManager.getInstance(activity, new OverlayManagerCompat(activity)), sectionNavigationController));
+
+                // Font selection section.
+                sectionControllers.add(new FontSectionController(
+                        FontManager.getInstance(activity, new OverlayManagerCompat(activity)), sectionNavigationController));
+
+                // Icon shape selection section.
+                sectionControllers.add(new IconShapeSectionController(
+                        IconShapeManager.getInstance(activity, new OverlayManagerCompat(activity)), sectionNavigationController));
+
                 break;
         }
-
-        // Icon pack selection section.
-        sectionControllers.add(new IconPackSectionController(
-                IconPackManager.getInstance(activity, new OverlayManagerCompat(activity)), sectionNavigationController));
-
-        // Font selection section.
-        sectionControllers.add(new FontSectionController(
-                FontManager.getInstance(activity, new OverlayManagerCompat(activity)), sectionNavigationController));
-
-        // Icon shape selection section.
-        sectionControllers.add(new IconShapeSectionController(
-                IconShapeManager.getInstance(activity, new OverlayManagerCompat(activity)), sectionNavigationController));
 
         return sectionControllers;
     }
