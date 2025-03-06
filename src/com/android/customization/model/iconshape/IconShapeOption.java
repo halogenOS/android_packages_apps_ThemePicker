@@ -33,13 +33,12 @@ import android.widget.ImageView;
 
 import androidx.core.graphics.ColorUtils;
 
-import com.android.customization.model.theme.ShapeAppIcon;
-import com.android.wallpaper.R;
-import com.android.wallpaper.util.ResourceUtils;
-
 import com.android.customization.model.CustomizationManager;
 import com.android.customization.model.CustomizationOption;
 import com.android.customization.model.theme.OverlayManagerCompat;
+import com.android.customization.model.theme.ShapeAppIcon;
+import com.android.themepicker.R;
+import com.android.wallpaper.util.ResourceUtils;
 
 import java.util.List;
 import java.util.Objects;
@@ -81,10 +80,12 @@ public class IconShapeOption implements CustomizationOption<IconShapeOption> {
         }
 
         Resources.Theme theme = view.getContext().getTheme();
-        int borderWidth = 2 * res.getDimensionPixelSize(R.dimen.option_border_width);
+        int borderWidth = 2 * res.getDimensionPixelSize(
+                com.android.wallpaper.R.dimen.option_border_width);
 
         Drawable background = mShape.getDrawable(0);
-        background.setTintList(res.getColorStateList(R.color.option_border_color, theme));
+        background.setTintList(res.getColorStateList(
+                com.android.wallpaper.R.color.option_border_color, theme));
 
         ShapeDrawable foreground = (ShapeDrawable) mShape.getDrawable(1);
 
