@@ -65,6 +65,8 @@ private constructor(
                                         context.resources.getString(R.string.wallpaper_color_tab)
                                     ColorType.PRESET_COLOR ->
                                         context.resources.getString(R.string.preset_color_tab_2)
+                                    ColorType.CUSTOM_COLOR ->
+                                        context.resources.getString(R.string.preset_color_tab_3)
                                 },
                             isSelected = isSelected,
                             onClick =
@@ -85,6 +87,8 @@ private constructor(
                 ColorType.WALLPAPER_COLOR ->
                     context.resources.getString(R.string.wallpaper_color_subheader)
                 ColorType.PRESET_COLOR ->
+                    context.resources.getString(R.string.preset_color_subheader)
+                ColorType.CUSTOM_COLOR ->
                     context.resources.getString(R.string.preset_color_subheader)
             }
         }
@@ -165,22 +169,32 @@ private constructor(
 
     /** The list of color options for the color section */
     val colorSectionOptions: Flow<List<OptionItemViewModel<ColorOptionIconViewModel>>> =
-        allColorOptions.map { allColorOptions ->
+        combine(allColorOptions, selectedColorTypeTabId) { allColorOptions, selectedColorTypeIdOrNull ->
+            val selectedColorTypeId = selectedColorTypeIdOrNull ?: ColorType.WALLPAPER_COLOR
             val wallpaperOptions = allColorOptions[ColorType.WALLPAPER_COLOR]
             val presetOptions = allColorOptions[ColorType.PRESET_COLOR]
+            val customOptions = allColorOptions[ColorType.CUSTOM_COLOR]
+
+            when (selectedColorTypeId) {
+                ColorType.CUSTOM_COLOR -> {
+                    // For custom tab, show all custom colors
+                    customOptions?.take(COLOR_SECTION_OPTION_SIZE) ?: emptyList()
+                }
+                else -> {
+                    // For other tabs, show wallpaper colors first, then preset colors if space
             val subOptions =
                 wallpaperOptions!!.subList(0, min(COLOR_SECTION_OPTION_SIZE, wallpaperOptions.size))
-            // Add additional options based on preset colors if size of wallpaper color options is
-            // less than COLOR_SECTION_OPTION_SIZE
-            val additionalSubOptions =
-                presetOptions!!.subList(
+
+                    val additionalSubOptions = presetOptions!!.subList(
                     0,
                     min(
-                        max(0, COLOR_SECTION_OPTION_SIZE - wallpaperOptions.size),
-                        presetOptions.size,
-                    ),
+                            max(0, COLOR_SECTION_OPTION_SIZE - subOptions.size),
+                            presetOptions.size,
+                        )
                 )
             subOptions + additionalSubOptions
+                }
+            }
         }
 
     class Factory(

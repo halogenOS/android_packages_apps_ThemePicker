@@ -22,4 +22,7 @@ enum class ColorType {
 
     /** Preset colors */
     PRESET_COLOR,
+
+    /** Custom colors */
+    CUSTOM_COLOR,
 }

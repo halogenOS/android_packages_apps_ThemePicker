@@ -88,6 +88,7 @@ class ColorProvider(private val context: Context, stubPackageName: String) :
     private var wallpaperColorBundles: List<ColorOption>? = null
     private var homeWallpaperColors: WallpaperColors? = null
     private var lockWallpaperColors: WallpaperColors? = null
+    private val customColorProvider = CustomColorProvider(context)
 
     override fun isAvailable(): Boolean {
         return monetEnabled && super.isAvailable() && colorsAvailable
@@ -386,6 +387,8 @@ class ColorProvider(private val context: Context, stubPackageName: String) :
     private fun buildFinalList(): List<ColorOption> {
         val presetColors = presetColorBundles ?: emptyList()
         val wallpaperColors = wallpaperColorBundles?.toMutableList() ?: mutableListOf()
+        val customColors = customColorProvider.getCustomColors()
+
         // Insert monochrome in the second position if it is enabled and included in preset
         // colors
         monochromeBundleName?.let {
@@ -401,6 +404,6 @@ class ColorProvider(private val context: Context, stubPackageName: String) :
                 )
             }
         }
-        return wallpaperColors + presetColors
+        return wallpaperColors + presetColors + customColors
     }
 }

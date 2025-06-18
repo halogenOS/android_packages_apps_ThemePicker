@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+
+    <!-- Custom Colors -->
+    <color name="xos_blue">#00b4e7</color> <!-- XOS Blue -->
+</resources>

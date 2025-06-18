@@ -85,6 +85,8 @@ constructor(
                             context.resources.getString(R.string.wallpaper_color_tab)
                         ColorType.PRESET_COLOR ->
                             context.resources.getString(R.string.preset_color_tab_2)
+                        ColorType.CUSTOM_COLOR ->
+                            context.resources.getString(R.string.preset_color_tab_3)
                     }
 
                 FloatingToolbarTabViewModel(
@@ -94,6 +96,7 @@ constructor(
                                 ColorType.WALLPAPER_COLOR ->
                                     com.android.wallpaper.R.drawable.ic_baseline_wallpaper_24
                                 ColorType.PRESET_COLOR -> R.drawable.ic_colors
+                                ColorType.CUSTOM_COLOR -> R.drawable.ic_colors
                             },
                         contentDescription = Text.Loaded(name),
                     ),
@@ -114,6 +117,8 @@ constructor(
                 ColorType.WALLPAPER_COLOR ->
                     context.resources.getString(R.string.wallpaper_color_subheader)
                 ColorType.PRESET_COLOR ->
+                    context.resources.getString(R.string.preset_color_subheader)
+                ColorType.CUSTOM_COLOR ->
                     context.resources.getString(R.string.preset_color_subheader)
             }
         }

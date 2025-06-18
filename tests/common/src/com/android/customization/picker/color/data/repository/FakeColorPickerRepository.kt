@@ -42,6 +42,7 @@ class FakeColorPickerRepository(private val context: Context) : ColorPickerRepos
             mapOf<ColorType, List<ColorOptionModel>>(
                 ColorType.WALLPAPER_COLOR to listOf(),
                 ColorType.PRESET_COLOR to listOf(),
+                ColorType.CUSTOM_COLOR to listOf(),
             )
         )
     override val colorOptions: StateFlow<Map<ColorType, List<ColorOptionModel>>> =
@@ -95,6 +96,7 @@ class FakeColorPickerRepository(private val context: Context) : ColorPickerRepos
                             add(colorOptionModel)
                         }
                     },
+                ColorType.CUSTOM_COLOR to listOf(),
             )
     }
 
@@ -142,6 +144,7 @@ class FakeColorPickerRepository(private val context: Context) : ColorPickerRepos
                             add(colorOption)
                         }
                     },
+                ColorType.CUSTOM_COLOR to listOf(),
             )
     }
 
@@ -247,10 +250,23 @@ class FakeColorPickerRepository(private val context: Context) : ColorPickerRepos
                 )
             }
         }
+        val customColorOptions = colorOptions[ColorType.CUSTOM_COLOR]!!
+        val newCustomColorOptions = buildList {
+            customColorOptions.forEach { option ->
+                add(
+                    ColorOptionModel(
+                        key = option.key,
+                        colorOption = option.colorOption,
+                        isSelected = option.testEquals(colorOptionModel),
+                    )
+                )
+            }
+        }
         _colorOptions.value =
             mapOf(
                 ColorType.WALLPAPER_COLOR to newWallpaperColorOptions,
                 ColorType.PRESET_COLOR to newBasicColorOptions,
+                ColorType.CUSTOM_COLOR to newCustomColorOptions,
             )
     }
 
@@ -260,6 +276,7 @@ class FakeColorPickerRepository(private val context: Context) : ColorPickerRepos
         when ((selectedColorOption.colorOption as ColorOptionImpl).type) {
             ColorType.WALLPAPER_COLOR -> ColorOptionsProvider.COLOR_SOURCE_HOME
             ColorType.PRESET_COLOR -> ColorOptionsProvider.COLOR_SOURCE_PRESET
+            ColorType.CUSTOM_COLOR -> ColorOptionsProvider.COLOR_SOURCE_PRESET
             else -> null
         }
 
