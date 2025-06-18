@@ -67,6 +67,7 @@ constructor(
                             mapOf(
                                 ColorType.WALLPAPER_COLOR to listOf(),
                                 ColorType.PRESET_COLOR to listOf(),
+                                ColorType.CUSTOM_COLOR to listOf(),
                             )
                         )
                     )
@@ -81,12 +82,16 @@ constructor(
                             val wallpaperColorOptions: MutableList<ColorOptionModel> =
                                 mutableListOf()
                             val presetColorOptions: MutableList<ColorOptionModel> = mutableListOf()
+                            val customColorOptions: MutableList<ColorOptionModel> =
+                                mutableListOf()
                             options?.forEach { option ->
                                 when ((option as ColorOptionImpl).type) {
                                     ColorType.WALLPAPER_COLOR ->
                                         wallpaperColorOptions.add(option.toModel())
                                     ColorType.PRESET_COLOR ->
                                         presetColorOptions.add(option.toModel())
+                                    ColorType.CUSTOM_COLOR ->
+                                        customColorOptions.add(option.toModel())
                                 }
                             }
                             continuation.resumeWith(
@@ -94,6 +99,7 @@ constructor(
                                     mapOf(
                                         ColorType.WALLPAPER_COLOR to wallpaperColorOptions,
                                         ColorType.PRESET_COLOR to presetColorOptions,
+                                        ColorType.CUSTOM_COLOR to customColorOptions,
                                     )
                                 )
                             )
