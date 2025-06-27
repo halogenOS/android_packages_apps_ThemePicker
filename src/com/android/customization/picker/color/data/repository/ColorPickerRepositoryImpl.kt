@@ -331,7 +331,8 @@ constructor(
             selectedThemeSettings.map { it?.themeStyle() }
         } else {
             settingsChanged.map {
-                colorManager.currentStyle?.let { ThemeStyle.valueOf(it) } ?: ThemeStyle.TONAL_SPOT
+                runCatching { colorManager.currentStyle?.let { ThemeStyle.valueOf(it) } }.getOrNull()
+                    ?: ThemeStyle.TONAL_SPOT
             }
         }
 
