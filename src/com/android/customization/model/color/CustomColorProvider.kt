@@ -21,6 +21,7 @@ class CustomColorProvider(private val context: Context) {
         // Get custom colors from resources
         val colorMap = listOf(
             Pair(R.color.xos_blue, "XOS Blue"),
+            Pair(R.color.xos_material, "XOS Material"),
         )
 
         // Create color options for each custom color
@@ -38,8 +39,8 @@ class CustomColorProvider(private val context: Context) {
             val lightColorScheme = ColorScheme(color, /* darkTheme= */ false, ThemeStyle.VIBRANT)
             val darkColorScheme = ColorScheme(color, /* darkTheme= */ true, ThemeStyle.VIBRANT)
 
-            builder.lightColors = getLightColorPreview(lightColorScheme)
-            builder.darkColors = getDarkColorPreview(darkColorScheme)
+            builder.lightColors = getColorPreview(lightColorScheme)
+            builder.darkColors = getColorPreview(darkColorScheme)
 
             // Add overlay packages
             builder.addOverlayPackage(ResourceConstants.OVERLAY_CATEGORY_COLOR, toColorString(color))
@@ -51,16 +52,7 @@ class CustomColorProvider(private val context: Context) {
         return colors
     }
 
-    private fun getLightColorPreview(colorScheme: ColorScheme): IntArray {
-        return intArrayOf(
-            colorScheme.accentColor,
-            colorScheme.accentColor,
-            colorScheme.accentColor,
-            colorScheme.accentColor
-        )
-    }
-
-    private fun getDarkColorPreview(colorScheme: ColorScheme): IntArray {
+    private fun getColorPreview(colorScheme: ColorScheme): IntArray {
         return intArrayOf(
             colorScheme.accentColor,
             colorScheme.accentColor,
