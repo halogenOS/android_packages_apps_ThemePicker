@@ -7,4 +7,5 @@
 
     <!-- Custom Colors -->
     <color name="xos_blue">#00b4e7</color> <!-- XOS Blue -->
+    <color name="xos_material">#1E88E5</color> <!-- XOS Material -->
 </resources>
