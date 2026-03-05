@@ -86,6 +86,7 @@ class ClockRegistryProvider(
                     "com.android.systemui.clocks.metro",
                     "com.android.systemui.clocks.numoverlap",
                     "com.android.systemui.clocks.weather",
+                    "custom.clockstyles.symmetra",
                 )
             )
 
