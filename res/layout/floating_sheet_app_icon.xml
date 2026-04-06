@@ -95,78 +95,33 @@
                     android:clipChildren="false" />
             </FrameLayout>
 
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <LinearLayout
                 android:id="@+id/themed_icon_toggle_entry"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="vertical"
                 android:paddingVertical="@dimen/floating_sheet_content_vertical_padding"
-                android:clipToPadding="false"
-                android:clipChildren="false">
+                android:paddingHorizontal="@dimen/floating_sheet_content_horizontal_padding">
 
                 <TextView
                     style="@style/CustomizationOptionEntryTitleTextStyle"
                     android:id="@+id/themed_icon_toggle_title"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/themed_icon_title"
-                    android:layout_marginStart="@dimen/floating_sheet_content_horizontal_padding"
-                    android:layout_marginEnd="@dimen/floating_sheet_clock_style_clock_size_text_margin_end"
-                    android:importantForAccessibility="no"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/themed_icon_toggle"
-                    app:layout_constraintTop_toBottomOf="parent"
-                    app:layout_constraintBottom_toTopOf="@+id/themed_icon_toggle" />
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    style="@style/SettingslibSwitchStyle.Expressive"
-                    android:id="@+id/themed_icon_toggle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/floating_sheet_content_horizontal_padding"
-                    android:contentDescription="@string/themed_icon_title"
-                    android:clickable="true"
-                    app:layout_constraintTop_toTopOf="@+id/themed_icon_toggle_title"
-                    app:layout_constraintBottom_toBottomOf="@+id/themed_icon_toggle_title"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:theme="@style/Theme.Material3.DynamicColors.DayNight" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                    android:singleLine="true"
+                    android:text="@string/themed_icon_title" />
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/themed_icon_drawer_entry"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingVertical="@dimen/floating_sheet_content_vertical_padding"
-                android:clipToPadding="false"
-                android:clipChildren="false"
-                android:visibility="gone">
-
-                <TextView
-                    style="@style/CustomizationOptionEntryTitleTextStyle"
-                    android:id="@+id/themed_icon_drawer_title"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/themed_icon_drawer_title"
-                    android:layout_marginStart="@dimen/floating_sheet_content_horizontal_padding"
-                    android:layout_marginEnd="@dimen/floating_sheet_clock_style_clock_size_text_margin_end"
-                    android:importantForAccessibility="no"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/themed_icon_drawer_toggle"
-                    app:layout_constraintTop_toBottomOf="parent"
-                    app:layout_constraintBottom_toTopOf="@+id/themed_icon_drawer_toggle" />
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    style="@style/SettingslibSwitchStyle.Expressive"
-                    android:id="@+id/themed_icon_drawer_toggle"
+                <Button
+                    style="?android:attr/borderlessButtonStyle"
+                    android:id="@+id/themed_icon_scope_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/floating_sheet_content_horizontal_padding"
-                    android:contentDescription="@string/themed_icon_drawer_title"
-                    android:clickable="true"
-                    app:layout_constraintTop_toTopOf="@+id/themed_icon_drawer_title"
-                    app:layout_constraintBottom_toBottomOf="@+id/themed_icon_drawer_title"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:theme="@style/Theme.Material3.DynamicColors.DayNight" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:paddingStart="0dp"
+                    android:singleLine="true"
+                    android:textAllCaps="false" />
+            </LinearLayout>
         </LinearLayout>
     </FrameLayout>
 

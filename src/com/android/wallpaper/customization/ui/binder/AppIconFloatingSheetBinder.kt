@@ -38,6 +38,7 @@ import com.android.themepicker.R
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.APP_ICONS
 import com.android.wallpaper.customization.ui.view.ShapeTileDrawable
+import com.android.wallpaper.customization.ui.viewmodel.AppIconPickerViewModel
 import com.android.wallpaper.customization.ui.viewmodel.AppIconPickerViewModel.Tab
 import com.android.wallpaper.customization.ui.viewmodel.ThemePickerCustomizationOptionsViewModel
 import com.android.wallpaper.picker.common.icon.ui.viewbinder.IconViewBinder
@@ -47,7 +48,6 @@ import com.android.wallpaper.picker.customization.ui.view.FloatingToolbar
 import com.android.wallpaper.picker.customization.ui.view.adapter.FloatingToolbarTabAdapter
 import com.android.wallpaper.picker.customization.ui.viewmodel.ColorUpdateViewModel
 import com.android.wallpaper.picker.option.ui.adapter.OptionItemAdapter2
-import com.google.android.material.materialswitch.MaterialSwitch
 import java.lang.ref.WeakReference
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -136,11 +136,9 @@ object AppIconFloatingSheetBinder {
                 it.initOptionList(view.context, styleOptionListAdapter)
             }
 
-        val themedIconsSwitch = view.requireViewById<MaterialSwitch>(R.id.themed_icon_toggle)
         val themedIconEntry = view.requireViewById<ViewGroup>(R.id.themed_icon_toggle_entry)
         val themedIconTitle = view.requireViewById<TextView>(R.id.themed_icon_toggle_title)
-        val drawerEntry = view.requireViewById<ViewGroup>(R.id.themed_icon_drawer_entry)
-        val drawerSwitch = view.requireViewById<MaterialSwitch>(R.id.themed_icon_drawer_toggle)
+        val themedIconScopeButton = view.requireViewById<android.widget.Button>(R.id.themed_icon_scope_button)
 
         data class FloatingSheetHeightsViewModel(
             val styleContentHeight: Int? = null,
@@ -282,57 +280,42 @@ object AppIconFloatingSheetBinder {
                     launch {
                         viewModel.isThemedIconAvailable.collect { isAvailable ->
                             themedIconEntry.isVisible = isAvailable
-                            themedIconsSwitch.isEnabled = isAvailable
                         }
                     }
 
                     launch {
-                        var switchBinding: SwitchColorBinder.Binding? = null
-                        var titleBinding: ColorUpdateBinder.Binding? = null
-                        viewModel.previewingIsThemeIconEnabled.collect {
-                            themedIconsSwitch.isChecked = it
-                            titleBinding?.destroy()
-                            titleBinding =
-                                bindTitleColor(
-                                    themedIconTitle,
-                                    colorUpdateViewModel,
-                                    isFloatingSheetActive,
-                                    lifecycleOwner,
-                                )
-                            switchBinding?.destroy()
-                            switchBinding =
-                                SwitchColorBinder.bind(
-                                    switch = themedIconsSwitch,
-                                    isChecked = it,
-                                    colorUpdateViewModel = colorUpdateViewModel,
-                                    shouldAnimateColor = isFloatingSheetActive,
-                                    lifecycleOwner = lifecycleOwner,
-                                )
+                        bindTitleColor(
+                            themedIconTitle,
+                            colorUpdateViewModel,
+                            isFloatingSheetActive,
+                            lifecycleOwner,
+                        )
+                    }
+
+                    val scopeLabels = arrayOf(
+                        view.context.getString(R.string.themed_icon_scope_off),
+                        view.context.getString(R.string.themed_icon_scope_home),
+                        view.context.getString(R.string.themed_icon_scope_home_and_drawer),
+                    )
+                    val scopeValues = AppIconPickerViewModel.ThemedIconScope.entries
+
+                    launch {
+                        viewModel.themedIconScope.collect { scope ->
+                            themedIconScopeButton.text = scopeLabels[scope.ordinal]
                         }
                     }
 
-                    launch {
-                        viewModel.toggleThemedIcon.collect {
-                            themedIconsSwitch.setOnCheckedChangeListener { _, _ ->
-                                launch { it.invoke() }
+                    themedIconScopeButton.setOnClickListener {
+                        val current = (viewModel.themedIconScope as? kotlinx.coroutines.flow.StateFlow)?.value
+                            ?: AppIconPickerViewModel.ThemedIconScope.OFF
+                        android.app.AlertDialog.Builder(view.context)
+                            .setTitle(R.string.themed_icon_title)
+                            .setSingleChoiceItems(scopeLabels, current.ordinal) { dialog, which ->
+                                viewModel.setThemedIconScope(scopeValues[which])
+                                dialog.dismiss()
                             }
-                        }
-                    }
-
-                    launch {
-                        viewModel.previewingIsThemeIconEnabled.collect { themed ->
-                            drawerEntry.isVisible = themed
-                        }
-                    }
-
-                    launch {
-                        viewModel.previewingIsThemedIconInDrawerEnabled.collect { enabled ->
-                            drawerSwitch.isChecked = enabled
-                        }
-                    }
-
-                    drawerSwitch.setOnCheckedChangeListener { _, isChecked ->
-                        viewModel.setThemedIconInDrawerEnabled(isChecked)
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .show()
                     }
                 }
             }

@@ -92,6 +92,8 @@ constructor(
         )
 
     //// Themed icons
+    enum class ThemedIconScope { OFF, HOME_SCREEN, HOME_AND_DRAWER }
+
     val isThemedIconAvailable =
         interactor.isThemedIconAvailable.shareIn(
             scope = viewModelScope,
@@ -150,6 +152,33 @@ constructor(
                 null
             }
         }
+
+    val themedIconScope: Flow<ThemedIconScope> =
+        combine(previewingIsThemeIconEnabled, previewingIsThemedIconInDrawerEnabled) {
+            themed, drawer ->
+            when {
+                !themed -> ThemedIconScope.OFF
+                drawer -> ThemedIconScope.HOME_AND_DRAWER
+                else -> ThemedIconScope.HOME_SCREEN
+            }
+        }.stateIn(viewModelScope, SharingStarted.Lazily, ThemedIconScope.OFF)
+
+    fun setThemedIconScope(scope: ThemedIconScope) {
+        when (scope) {
+            ThemedIconScope.OFF -> {
+                overridingIsThemedIconEnabled.value = false
+                overridingIsThemedIconInDrawerEnabled.value = false
+            }
+            ThemedIconScope.HOME_SCREEN -> {
+                overridingIsThemedIconEnabled.value = true
+                overridingIsThemedIconInDrawerEnabled.value = false
+            }
+            ThemedIconScope.HOME_AND_DRAWER -> {
+                overridingIsThemedIconEnabled.value = true
+                overridingIsThemedIconInDrawerEnabled.value = true
+            }
+        }
+    }
 
     //// Style
     val selectedIconStyle = interactor.selectedIconStyle
