@@ -47,6 +47,9 @@ constructor(@ApplicationContext private val context: Context) : IconStyleReposit
     private val _isThemedIconActivated = MutableStateFlow(false)
     override val isThemedIconActivated = _isThemedIconActivated.asStateFlow()
 
+    private val _isThemedIconInDrawerActivated = MutableStateFlow(false)
+    override val isThemedIconInDrawerActivated = _isThemedIconInDrawerActivated.asStateFlow()
+
     private val _selectedIconStyle = MutableStateFlow<IconStyle>(ThemePickerIconStyle.DEFAULT)
     override val selectedIconStyle = _selectedIconStyle.asStateFlow()
 
@@ -85,6 +88,10 @@ constructor(@ApplicationContext private val context: Context) : IconStyleReposit
 
     override suspend fun setThemedIconEnabled(enabled: Boolean) {
         _isThemedIconActivated.value = enabled
+    }
+
+    override suspend fun setThemedIconInDrawerEnabled(enabled: Boolean) {
+        _isThemedIconInDrawerActivated.value = enabled
     }
 
     fun setIsCustomizationAvailable(isAvailable: Boolean) {

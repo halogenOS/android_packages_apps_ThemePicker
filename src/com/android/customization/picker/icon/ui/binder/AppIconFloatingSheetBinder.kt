@@ -154,6 +154,8 @@ object AppIconFloatingSheetBinder {
             shouldAnimate = isFloatingSheetActive,
             lifecycleOwner = lifecycleOwner,
         )
+        val drawerEntry = view.requireViewById<ViewGroup>(R.id.themed_icon_drawer_entry)
+        val drawerSwitch = view.requireViewById<MaterialSwitch>(R.id.themed_icon_drawer_toggle)
 
         data class FloatingSheetHeightsViewModel(
             val styleContentHeight: Int? = null,
@@ -388,6 +390,22 @@ object AppIconFloatingSheetBinder {
                                 launch { it.invoke() }
                             }
                         }
+                    }
+
+                    launch {
+                        viewModel.previewingIsThemeIconEnabled.collect { themed ->
+                            drawerEntry.isVisible = themed
+                        }
+                    }
+
+                    launch {
+                        viewModel.previewingIsThemedIconInDrawerEnabled.collect { enabled ->
+                            drawerSwitch.isChecked = enabled
+                        }
+                    }
+
+                    drawerSwitch.setOnCheckedChangeListener { _, isChecked ->
+                        viewModel.setThemedIconInDrawerEnabled(isChecked)
                     }
                 }
             }

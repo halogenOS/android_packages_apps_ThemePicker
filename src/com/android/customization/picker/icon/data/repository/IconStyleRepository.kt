@@ -29,7 +29,11 @@ interface IconStyleRepository {
 
     val isThemedIconActivated: Flow<Boolean>
 
+    val isThemedIconInDrawerActivated: Flow<Boolean>
+
     suspend fun setThemedIconEnabled(enabled: Boolean)
+
+    suspend fun setThemedIconInDrawerEnabled(enabled: Boolean)
 
     val iconStyleModels: Flow<List<IconStyleModel>>
 
