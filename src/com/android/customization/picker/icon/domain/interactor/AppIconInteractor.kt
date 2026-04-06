@@ -47,12 +47,17 @@ constructor(
 
     val isThemedIconEnabled: Flow<Boolean> = iconStyleRepository.isThemedIconActivated
 
+    val isThemedIconInDrawerEnabled: Flow<Boolean> = iconStyleRepository.isThemedIconInDrawerActivated
+
     val iconStyleModels = iconStyleRepository.iconStyleModels
 
     val selectedIconStyle = iconStyleRepository.selectedIconStyle
 
     suspend fun applyThemedIconEnabled(enabled: Boolean) =
         iconStyleRepository.setThemedIconEnabled(enabled)
+
+    suspend fun applyThemedIconInDrawerEnabled(enabled: Boolean) =
+        iconStyleRepository.setThemedIconInDrawerEnabled(enabled)
 
     suspend fun applyShape(shapeKey: String) = shapeRepository.applyShape(shapeKey)
 

@@ -59,7 +59,7 @@ class AppIconPickerViewModel
 @AssistedInject
 constructor(
     @ApplicationContext private val applicationContext: Context,
-    interactor: AppIconInteractor,
+    private val interactor: AppIconInteractor,
     private val logger: ThemesUserEventLogger,
     @Assisted private val viewModelScope: CoroutineScope,
 ) {
@@ -117,6 +117,37 @@ constructor(
             {
                 val newValue = !it
                 overridingIsThemedIconEnabled.value = newValue
+            }
+        }
+
+    private val overridingIsThemedIconInDrawerEnabled = MutableStateFlow<Boolean?>(null)
+    val isThemedIconInDrawerEnabled: Flow<Boolean> =
+        interactor.isThemedIconInDrawerEnabled.shareIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            replay = 1,
+        )
+    val previewingIsThemedIconInDrawerEnabled: Flow<Boolean> =
+        combine(overridingIsThemedIconInDrawerEnabled, isThemedIconInDrawerEnabled) {
+            overriding, current -> overriding ?: current
+        }
+
+    fun setThemedIconInDrawerEnabled(enabled: Boolean) {
+        overridingIsThemedIconInDrawerEnabled.value = enabled
+    }
+
+    val drawerOnApply: Flow<(suspend () -> Unit)?> =
+        combine(overridingIsThemedIconInDrawerEnabled, isThemedIconInDrawerEnabled) {
+            overriding, current ->
+            if (overriding != null && overriding != current) {
+                {
+                    coroutineScope {
+                        launch { interactor.applyThemedIconInDrawerEnabled(overriding) }
+                        isThemedIconInDrawerEnabled.drop(1).take(1).collect { return@collect }
+                    }
+                }
+            } else {
+                null
             }
         }
 
@@ -398,6 +429,7 @@ constructor(
     fun resetPreview() {
         overridingShapeKey.value = null
         overridingIsThemedIconEnabled.value = null
+        overridingIsThemedIconInDrawerEnabled.value = null
     }
 
     fun resetPreview2() {

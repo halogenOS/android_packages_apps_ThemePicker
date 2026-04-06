@@ -235,7 +235,19 @@ constructor(
                         if (BaseFlags.get().isExtendibleThemeManager()) {
                             appIconPickerViewModel.iconStyleAndShapeOnApply
                         } else {
-                            appIconPickerViewModel.shapeAndThemedIconOnApply
+                            combine(
+                                appIconPickerViewModel.shapeAndThemedIconOnApply,
+                                appIconPickerViewModel.drawerOnApply,
+                            ) { baseOnApply, drawerOnApply ->
+                                if (baseOnApply == null && drawerOnApply == null) {
+                                    null
+                                } else {
+                                    {
+                                        baseOnApply?.invoke()
+                                        drawerOnApply?.invoke()
+                                    }
+                                }
+                            }
                         }
                     COLORS ->
                         combine(colorPickerViewModel2.onApply, darkModeViewModel.onApply) {

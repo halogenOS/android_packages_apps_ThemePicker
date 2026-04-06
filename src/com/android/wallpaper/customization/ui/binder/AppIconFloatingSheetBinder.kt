@@ -139,6 +139,8 @@ object AppIconFloatingSheetBinder {
         val themedIconsSwitch = view.requireViewById<MaterialSwitch>(R.id.themed_icon_toggle)
         val themedIconEntry = view.requireViewById<ViewGroup>(R.id.themed_icon_toggle_entry)
         val themedIconTitle = view.requireViewById<TextView>(R.id.themed_icon_toggle_title)
+        val drawerEntry = view.requireViewById<ViewGroup>(R.id.themed_icon_drawer_entry)
+        val drawerSwitch = view.requireViewById<MaterialSwitch>(R.id.themed_icon_drawer_toggle)
 
         data class FloatingSheetHeightsViewModel(
             val styleContentHeight: Int? = null,
@@ -315,6 +317,22 @@ object AppIconFloatingSheetBinder {
                                 launch { it.invoke() }
                             }
                         }
+                    }
+
+                    launch {
+                        viewModel.previewingIsThemeIconEnabled.collect { themed ->
+                            drawerEntry.isVisible = themed
+                        }
+                    }
+
+                    launch {
+                        viewModel.previewingIsThemedIconInDrawerEnabled.collect { enabled ->
+                            drawerSwitch.isChecked = enabled
+                        }
+                    }
+
+                    drawerSwitch.setOnCheckedChangeListener { _, isChecked ->
+                        viewModel.setThemedIconInDrawerEnabled(isChecked)
                     }
                 }
             }

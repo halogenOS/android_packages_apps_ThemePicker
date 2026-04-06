@@ -389,6 +389,7 @@
 
     <!-- Title of a section of the customization where the user can select color override for icon. [CHAR LIMIT=30] -->
     <string name="themed_icon_title" msgid="4305612684940220645">Themed icons</string>
+    <string name="themed_icon_drawer_title">App drawer themed icons</string>
 
     <!-- Title of a section of the customization where the user can select color override for icon. [CHAR LIMIT=40] -->
     <string name="themed_icon_beta_title">Themed icons (beta)</string>

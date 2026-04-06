@@ -122,6 +122,37 @@ constructor(
                 initialValue = false,
             )
 
+    override val isThemedIconInDrawerActivated: Flow<Boolean> =
+        previewUtilsFlow
+            .flatMapLatest {
+                callbackFlow {
+                    var disposableHandle: DisposableHandle? = null
+                    if (it != null) {
+                        val contentObserver =
+                            object : ContentObserver(null) {
+                                override fun onChange(selfChange: Boolean) {
+                                    trySend(queryBoolean(it.getUri(ICON_THEMED_IN_DRAWER)))
+                                }
+                            }
+                        contentResolver.registerContentObserver(
+                            it.getUri(ICON_THEMED_IN_DRAWER),
+                            true,
+                            contentObserver,
+                        )
+                        trySend(queryBoolean(it.getUri(ICON_THEMED_IN_DRAWER)))
+                        disposableHandle = DisposableHandle {
+                            contentResolver.unregisterContentObserver(contentObserver)
+                        }
+                    }
+                    awaitClose { disposableHandle?.dispose() }
+                }
+            }
+            .stateIn(
+                scope = backgroundScope,
+                started = SharingStarted.WhileSubscribed(),
+                initialValue = false,
+            )
+
     override val iconStyleModels: Flow<List<IconStyleModel>> =
         isCustomizationAvailable.map { isThemedIconAvailable ->
             ThemePickerIconStyle.entries
@@ -226,8 +257,31 @@ constructor(
         }
     }
 
+    override suspend fun setThemedIconInDrawerEnabled(enabled: Boolean) {
+        previewUtilsFlow.first()?.let {
+            val values = ContentValues()
+            values.put(COL_ICON_THEMED_VALUE, enabled)
+            contentResolver.update(
+                it.getUri(ICON_THEMED_IN_DRAWER),
+                values,
+                null,
+                null,
+            )
+        }
+    }
+
+    private fun queryBoolean(uri: Uri): Boolean {
+        contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            if (cursor.moveToNext()) {
+                return cursor.getInt(cursor.getColumnIndex(COL_ICON_THEMED_VALUE)) == ENABLED
+            }
+        }
+        return false
+    }
+
     companion object {
         const val ICON_THEMED = "icon_themed"
+        const val ICON_THEMED_IN_DRAWER = "icon_themed_in_drawer"
         const val SET_ICON_THEMED = "set_icon_themed"
         const val COL_ICON_THEMED_VALUE = "boolean_value"
         private const val ENABLED = 1
