@@ -24,7 +24,6 @@ import android.net.Uri
 import android.os.ServiceSpecificException
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.graphics.drawable.DrawableCompat
@@ -80,7 +79,7 @@ object FontFloatingSheetBinder {
                 it.initFontOptionList(view.context, adapter)
             }
 
-        val installButton = view.requireViewById<Button>(R.id.install_font_button)
+        val installButton = view.requireViewById<View>(R.id.install_font_button)
         installButton.isEnabled = launchFontFilePicker != null
         installButton.setOnClickListener {
             val launcher = launchFontFilePicker ?: return@setOnClickListener

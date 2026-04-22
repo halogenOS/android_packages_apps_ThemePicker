@@ -676,7 +676,7 @@
     <string name="font_picker_stock_option">Default</string>
     <!-- Font picker: title of the font customization screen. [CHAR LIMIT=30] -->
     <string name="font_picker_title">Font</string>
-    <!-- Font picker: label for the button that opens a file picker to install a new font. [CHAR LIMIT=30] -->
+    <!-- Font picker: label for the row that opens a file picker to install a new font. [CHAR LIMIT=30] -->
     <string name="font_picker_install_label">Install font</string>
     <!-- Font picker: toast shown when installing a non-variable font file. [CHAR LIMIT=NONE] -->
     <string name="font_picker_install_error_not_variable">Only variable fonts are supported. The selected font does not have a weight axis.</string>
