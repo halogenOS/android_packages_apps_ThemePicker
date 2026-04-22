@@ -45,6 +45,7 @@ constructor(private val defaultCustomizationOptionUtil: DefaultCustomizationOpti
         COLOR_CONTRAST,
         APP_ICONS,
         GRID,
+        FONT,
     }
 
     override fun getCustomizationOptionFromDestination(destination: String): CustomizationOption? {

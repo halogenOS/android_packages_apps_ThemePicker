@@ -31,6 +31,7 @@ import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.APP_ICONS
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.COLORS
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.COLOR_CONTRAST
+import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.FONT
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.GRID
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.PACK_THEME
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.SCREEN_SAVER
@@ -195,6 +196,16 @@ constructor(
                                 )
                         )
                     }
+                    if (customizationOptionsData.isFontCustomizationAvailable) {
+                        add(
+                            FONT to
+                                layoutInflater.inflate(
+                                    R.layout.customization_option_entry_font,
+                                    optionContainer,
+                                    false,
+                                )
+                        )
+                    }
                 }
         }
     }
@@ -264,6 +275,14 @@ constructor(
                     },
                 )
             }
+            if (customizationOptionsData.isFontCustomizationAvailable) {
+                put(
+                    FONT,
+                    inflateFloatingSheet(FONT, bottomSheetContainer, layoutInflater).also {
+                        bottomSheetContainer.addView(it)
+                    },
+                )
+            }
         }
     }
 
@@ -287,6 +306,7 @@ constructor(
             COLORS -> R.layout.floating_sheet_colors
             APP_ICONS -> R.layout.floating_sheet_app_icon
             GRID -> R.layout.floating_sheet_grid
+            FONT -> R.layout.floating_sheet_font
             else ->
                 throw IllegalStateException(
                     "Customization option $option does not have a bottom sheet view"

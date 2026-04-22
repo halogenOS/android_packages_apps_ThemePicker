@@ -18,6 +18,7 @@
         <permission name="android.permission.BIND_WALLPAPER"/>
         <permission name="android.permission.CHANGE_OVERLAY_PACKAGES"/>
         <permission name="android.permission.CUSTOMIZE_SYSTEM_UI"/>
+        <permission name="android.permission.INSTALL_CUSTOM_FONTS"/>
         <permission name="android.permission.MODIFY_DAY_NIGHT_MODE"/>
         <permission name="android.permission.READ_DEVICE_CONFIG"/>
         <permission name="android.permission.READ_WALLPAPER_INTERNAL"/>
