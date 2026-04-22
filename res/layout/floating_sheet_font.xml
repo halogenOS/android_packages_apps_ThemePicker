@@ -20,7 +20,7 @@
     android:paddingHorizontal="@dimen/floating_sheet_horizontal_padding"
     android:orientation="vertical">
 
-    <FrameLayout
+    <LinearLayout
         android:id="@+id/floating_sheet_content_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -30,28 +30,46 @@
         android:clipToPadding="false"
         android:clipChildren="false">
 
-        <include
-            layout="@layout/font_option"
-            android:id="@+id/invisible_font_option"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="invisible" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/font_options"
-            android:layout_width="wrap_content"
+        <FrameLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipToPadding="false"
-            android:clipChildren="false"
-            android:layout_gravity="center_horizontal" />
+            android:clipChildren="false">
 
-        <Button
+            <include
+                layout="@layout/font_option"
+                android:id="@+id/invisible_font_option"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="invisible" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/font_options"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:clipChildren="false"
+                android:layout_gravity="center_horizontal" />
+        </FrameLayout>
+
+        <LinearLayout
             android:id="@+id/install_font_button"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginTop="8dp"
-            android:text="@string/font_picker_install_label" />
-    </FrameLayout>
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="@dimen/floating_sheet_content_vertical_padding"
+            android:paddingHorizontal="@dimen/floating_sheet_content_horizontal_padding">
+
+            <TextView
+                style="@style/CustomizationOptionEntryTitleTextStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:text="@string/font_picker_install_label" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>
