@@ -21,6 +21,8 @@
     <uses-permission android:name="android.permission.READ_WALLPAPER_INTERNAL"/>
     <uses-permission android:name="android.permission.SET_WALLPAPER"/>
     <uses-permission android:name="android.permission.SET_WALLPAPER_DIM_AMOUNT" />
+    <uses-permission android:name="android.permission.INSTALL_CUSTOM_FONTS" />
+    <uses-permission android:name="android.permission.RESTART_SYSTEM_UI" />
 
     <queries>
         <package android:name="android"/>

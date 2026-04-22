@@ -671,4 +671,23 @@
     Example: "value 3, range from 1 to 7". [CHAR LIMIT=none]
     -->
     <string name="slider_state_description_template">%1$d, range from %2$d to %3$d</string>
+
+    <!-- Font picker: label for the option that restores the device's default system font. [CHAR LIMIT=30] -->
+    <string name="font_picker_stock_option">Default</string>
+    <!-- Font picker: title of the font customization screen. [CHAR LIMIT=30] -->
+    <string name="font_picker_title">Font</string>
+    <!-- Font picker: label for the button that opens a file picker to install a new font. [CHAR LIMIT=30] -->
+    <string name="font_picker_install_label">Install font</string>
+    <!-- Font picker: toast shown when installing a non-variable font file. [CHAR LIMIT=NONE] -->
+    <string name="font_picker_install_error_not_variable">Only variable fonts are supported. The selected font does not have a weight axis.</string>
+    <!-- Font picker: generic toast shown when font installation fails. [CHAR LIMIT=NONE] -->
+    <string name="font_picker_install_error_generic">Failed to install font.</string>
+    <!-- Font picker: dialog title after applying a font. [CHAR LIMIT=NONE] -->
+    <string name="font_picker_restart_dialog_title">Restart System UI</string>
+    <!-- Font picker: dialog message after applying a font. [CHAR LIMIT=NONE] -->
+    <string name="font_picker_restart_dialog_message">For changes to fonts to take effect, running apps need to be restarted. To apply the font for the system UI, would you like to restart System UI now?</string>
+    <!-- Font picker: positive button on restart dialog. [CHAR LIMIT=20] -->
+    <string name="font_picker_restart_dialog_positive">Restart now</string>
+    <!-- Font picker: negative button on restart dialog. [CHAR LIMIT=20] -->
+    <string name="font_picker_restart_dialog_negative">Later</string>
 </resources>

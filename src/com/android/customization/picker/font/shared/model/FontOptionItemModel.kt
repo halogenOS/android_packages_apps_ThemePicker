@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2026 The halogenOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.android.wallpaper.customization.ui.viewmodel
+package com.android.customization.picker.font.shared.model
 
-import com.android.wallpaper.picker.customization.ui.viewmodel.CustomizationOptionsData
+import kotlinx.coroutines.flow.StateFlow
 
-class ThemePickerCustomizationOptionsData(
-    val isGridCustomizationAvailable: Boolean,
-    val isIconStyleAvailable: Boolean,
-    val isShapeAvailable: Boolean,
-    val isFontCustomizationAvailable: Boolean = true,
-) : CustomizationOptionsData {
-    val isIconCustomizationAvailable = isIconStyleAvailable || isShapeAvailable
-}
+data class FontOptionItemModel(
+    /** The installed family name, or `null` for the built-in system default. */
+    val familyName: String?,
+    val displayName: String,
+    val isSelected: StateFlow<Boolean>,
+    val onSelected: suspend () -> Unit,
+)

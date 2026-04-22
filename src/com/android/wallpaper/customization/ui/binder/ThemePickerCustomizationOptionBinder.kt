@@ -20,6 +20,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.provider.Settings
 import android.view.View
@@ -101,6 +102,7 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
         navigateToPackThemeActivity: (Intent) -> Unit,
         navigateToScreenSaverSettingsActivity: () -> Unit,
         iconStyleViewUtil: IconStyleViewUtil,
+        launchFontFilePicker: ((onResult: (Uri?) -> Unit) -> Unit)?,
     ) {
         defaultCustomizationOptionsBinder.bind(
             customizationOptionsData,
@@ -117,6 +119,7 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
             navigateToPackThemeActivity,
             navigateToScreenSaverSettingsActivity,
             iconStyleViewUtil,
+            launchFontFilePicker,
         )
 
         customizationOptionsData as ThemePickerCustomizationOptionsData
@@ -272,6 +275,16 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
             optionGridDescription = optionGrid.requireViewById(R.id.option_entry_description)
             optionGridIcon = optionGrid.requireViewById(R.id.option_entry_icon)
         }
+
+        val optionFont: View? =
+            if (customizationOptionsData.isFontCustomizationAvailable) {
+                homeScreenCustomizationOptionEntries
+                    .first { it.first == ThemePickerHomeCustomizationOption.FONT }
+                    .second
+            } else null
+        val optionFontDescription: TextView? =
+            optionFont?.requireViewById(R.id.option_entry_description)
+        val optionFontIcon: ImageView? = optionFont?.requireViewById(R.id.option_entry_icon)
 
         val optionColorContrast: View =
             homeScreenCustomizationOptionEntries
@@ -438,6 +451,22 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
                             ->
                             optionGridDescription?.let { TextViewBinder.bind(it, gridOption.text) }
                             gridOption.payload?.let { optionGridIcon?.setImageDrawable(it) }
+                        }
+                    }
+                }
+
+                if (customizationOptionsData.isFontCustomizationAvailable) {
+                    launch {
+                        optionsViewModel.onCustomizeFontClicked.collect {
+                            optionFont?.setOnClickListener { _ -> it?.invoke() }
+                        }
+                    }
+                    launch {
+                        optionsViewModel.fontPickerViewModel.previewingFamily.collect { family ->
+                            val label =
+                                family
+                                    ?: view.context.getString(R.string.font_picker_stock_option)
+                            optionFontDescription?.text = label
                         }
                     }
                 }
@@ -664,6 +693,17 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
                 colorUpdateViewModel,
                 lifecycleOwner,
                 Dispatchers.IO,
+            )
+        }
+
+        customizationOptionFloatingSheetViewMap?.get(ThemePickerHomeCustomizationOption.FONT)?.let {
+            FontFloatingSheetBinder.bind(
+                view = it,
+                optionsViewModel = optionsViewModel,
+                colorUpdateViewModel = colorUpdateViewModel,
+                lifecycleOwner = lifecycleOwner,
+                backgroundDispatcher = Dispatchers.IO,
+                launchFontFilePicker = launchFontFilePicker,
             )
         }
     }

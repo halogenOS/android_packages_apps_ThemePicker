@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2026 The halogenOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.wallpaper.customization.ui.viewmodel
+package com.android.customization.picker.font.shared.model
 
-import com.android.wallpaper.picker.customization.ui.viewmodel.CustomizationOptionsData
+sealed class FontOptionItemsModel {
+    data class Loaded(val options: List<FontOptionItemModel>) : FontOptionItemsModel()
 
-class ThemePickerCustomizationOptionsData(
-    val isGridCustomizationAvailable: Boolean,
-    val isIconStyleAvailable: Boolean,
-    val isShapeAvailable: Boolean,
-    val isFontCustomizationAvailable: Boolean = true,
-) : CustomizationOptionsData {
-    val isIconCustomizationAvailable = isIconStyleAvailable || isShapeAvailable
+    data class Error(val throwable: Throwable?) : FontOptionItemsModel()
 }

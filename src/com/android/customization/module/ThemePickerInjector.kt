@@ -40,6 +40,7 @@ import com.android.customization.model.themedicon.domain.interactor.ThemedIconSn
 import com.android.customization.module.logging.ThemesUserEventLogger
 import com.android.customization.picker.clock.domain.interactor.ClockPickerInteractor
 import com.android.customization.picker.clock.domain.interactor.ClockPickerSnapshotRestorer
+import com.android.customization.picker.font.domain.interactor.FontSnapshotRestorer
 import com.android.customization.picker.clock.ui.view.ClockViewFactory
 import com.android.customization.picker.clock.ui.view.ThemePickerClockViewFactory
 import com.android.customization.picker.clock.ui.viewmodel.ClockCarouselViewModel
@@ -109,6 +110,7 @@ constructor(
     private val systemSettingsRepository: Lazy<SystemSettingsRepository>,
     private val clockPickerInteractor: Lazy<ClockPickerInteractor>,
     private val clockPickerSnapshotRestorer: Lazy<ClockPickerSnapshotRestorer>,
+    private val fontSnapshotRestorer: Lazy<FontSnapshotRestorer>,
     displayUtils: Lazy<DisplayUtils>,
     requester: Lazy<Requester>,
     networkStatusNotifier: Lazy<NetworkStatusNotifier>,
@@ -221,6 +223,7 @@ constructor(
             this[KEY_APP_GRID_SNAPSHOT_RESTORER] = getGridSnapshotRestorer(context)
             this[KEY_COLOR_PICKER_SNAPSHOT_RESTORER] = colorPickerSnapshotRestorer.get()
             this[KEY_CLOCKS_SNAPSHOT_RESTORER] = clockPickerSnapshotRestorer.get()
+            this[KEY_FONT_SNAPSHOT_RESTORER] = fontSnapshotRestorer.get()
         }
     }
 
@@ -452,6 +455,7 @@ constructor(
         @JvmStatic
         private val KEY_COLOR_PICKER_SNAPSHOT_RESTORER = KEY_APP_GRID_SNAPSHOT_RESTORER + 1
         @JvmStatic private val KEY_CLOCKS_SNAPSHOT_RESTORER = KEY_COLOR_PICKER_SNAPSHOT_RESTORER + 1
+        @JvmStatic private val KEY_FONT_SNAPSHOT_RESTORER = KEY_CLOCKS_SNAPSHOT_RESTORER + 1
 
         /**
          * When this injector is overridden, this is the minimal value that should be used by
@@ -459,6 +463,6 @@ constructor(
          *
          * It should always be greater than the biggest restorer key.
          */
-        @JvmStatic protected val MIN_SNAPSHOT_RESTORER_KEY = KEY_CLOCKS_SNAPSHOT_RESTORER + 1
+        @JvmStatic protected val MIN_SNAPSHOT_RESTORER_KEY = KEY_FONT_SNAPSHOT_RESTORER + 1
     }
 }
