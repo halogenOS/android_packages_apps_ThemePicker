@@ -19,12 +19,17 @@ package com.android.customization.picker.font.data.repository
 import android.content.Context
 import android.graphics.fonts.FontManager
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.android.wallpaper.picker.di.modules.BackgroundDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.FileOutputStream
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -92,26 +97,54 @@ constructor(
      *
      * The framework parses the font's name table and uses the PostScript name as the family
      * identifier. Returns the resolved family name on success.
+     *
+     * The font bytes are streamed through an anonymous pipe rather than handing the original
+     * URI's file descriptor to system_server. The original FD is anchored on the source inode
+     * (e.g. a file on `/sdcard`, labelled `fuse:s0`), and SELinux denies system_server `read`
+     * on that label regardless of who opened the FD. By copying through a pipe whose inode
+     * carries this app's domain (`appdomain:fifo_file`), system_server reads against a label
+     * that is already in its allowlist.
      */
     suspend fun installFromUri(uri: Uri): Result<String> =
         withContext(bgDispatcher) {
             val manager = fontManager
                 ?: return@withContext Result.failure(IllegalStateException("FontManager unavailable"))
-            Log.d(TAG, "installFromUri: opening PFD for $uri")
-            runCatching {
-                context.contentResolver.openFileDescriptor(uri, "r").use { pfd ->
-                    requireNotNull(pfd) { "Could not open font uri: $uri" }
-                    Log.d(TAG, "installFromUri: PFD opened, calling installCustomFontFamilyFromFile")
-                    val familyName = manager.installCustomFontFamilyFromFile(pfd)
-                    Log.d(TAG, "installFromUri: success, familyName=$familyName")
-                    _installedFamilies.value =
-                        (_installedFamilies.value + familyName).distinct()
-                    familyName
+            Log.d(TAG, "installFromUri: streaming $uri through pipe")
+            runCatching { installViaPipe(manager, uri) }
+                .also { result ->
+                    result.onFailure { e -> Log.e(TAG, "installFromUri: failed", e) }
                 }
-            }.also { result ->
-                result.onFailure { e ->
-                    Log.e(TAG, "installFromUri: failed", e)
+        }
+
+    private suspend fun installViaPipe(manager: FontManager, uri: Uri): String =
+        coroutineScope {
+            val pipe = ParcelFileDescriptor.createReliablePipe()
+            val readSide = pipe[0]
+            val writeSide = pipe[1]
+
+            val writerDeferred = async(bgDispatcher) {
+                try {
+                    FileOutputStream(writeSide.fileDescriptor).use { out ->
+                        val input = context.contentResolver.openInputStream(uri)
+                            ?: throw IOException("openInputStream returned null for $uri")
+                        input.use { it.copyTo(out) }
+                    }
+                    writeSide.close()
+                } catch (t: Throwable) {
+                    runCatching { writeSide.closeWithError(t.message ?: "font copy failed") }
+                    throw t
                 }
+            }
+
+            try {
+                val familyName = readSide.use { manager.installCustomFontFamilyFromFile(it) }
+                writerDeferred.await()
+                _installedFamilies.value = (_installedFamilies.value + familyName).distinct()
+                Log.d(TAG, "installFromUri: success, familyName=$familyName")
+                familyName
+            } catch (t: Throwable) {
+                writerDeferred.cancel()
+                throw t
             }
         }
 
