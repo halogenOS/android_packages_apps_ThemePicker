@@ -23,6 +23,7 @@
     <uses-permission android:name="android.permission.SET_WALLPAPER_DIM_AMOUNT" />
     <uses-permission android:name="android.permission.INSTALL_CUSTOM_FONTS" />
     <uses-permission android:name="android.permission.RESTART_SYSTEM_UI" />
+    <uses-permission android:name="android.permission.REBOOT" />
 
     <queries>
         <package android:name="android"/>

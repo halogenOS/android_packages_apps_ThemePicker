@@ -683,11 +683,11 @@
     <!-- Font picker: generic toast shown when font installation fails. [CHAR LIMIT=NONE] -->
     <string name="font_picker_install_error_generic">Failed to install font.</string>
     <!-- Font picker: dialog title after applying a font. [CHAR LIMIT=NONE] -->
-    <string name="font_picker_restart_dialog_title">Restart System UI</string>
+    <string name="font_picker_restart_dialog_title">Restart system</string>
     <!-- Font picker: dialog message after applying a font. [CHAR LIMIT=NONE] -->
-    <string name="font_picker_restart_dialog_message">For changes to fonts to take effect, running apps need to be restarted. To apply the font for the system UI, would you like to restart System UI now?</string>
+    <string name="font_picker_restart_dialog_message">For font changes to take effect, the system needs to be restarted. Would you like to restart now?</string>
     <!-- Font picker: positive button on restart dialog. [CHAR LIMIT=20] -->
     <string name="font_picker_restart_dialog_positive">Restart now</string>
     <!-- Font picker: negative button on restart dialog. [CHAR LIMIT=20] -->
-    <string name="font_picker_restart_dialog_negative">Later</string>
+    <string name="font_picker_restart_dialog_negative">Restart later</string>
 </resources>
