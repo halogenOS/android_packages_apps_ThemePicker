@@ -22,6 +22,7 @@
         <permission name="android.permission.MODIFY_DAY_NIGHT_MODE"/>
         <permission name="android.permission.READ_DEVICE_CONFIG"/>
         <permission name="android.permission.READ_WALLPAPER_INTERNAL"/>
+        <permission name="android.permission.REBOOT"/>
         <permission name="android.permission.SET_WALLPAPER"/>
         <permission name="android.permission.SET_WALLPAPER_COMPONENT"/>
         <permission name="android.permission.WRITE_SECURE_SETTINGS"/>

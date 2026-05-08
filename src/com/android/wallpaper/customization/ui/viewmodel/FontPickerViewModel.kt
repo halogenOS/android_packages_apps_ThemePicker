@@ -54,8 +54,8 @@ constructor(
     /** Non-null = user has picked something, awaiting Apply. Null = mirror current active. */
     private val overridingFamily = MutableStateFlow<Selection?>(null)
 
-    /** Emits when a font change was successfully applied and SystemUI should be restarted. */
-    val restartSystemUiRequired = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    /** Emits when a font change was successfully applied and the system should be restarted. */
+    val restartRequired = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     /** The family that should be previewed (user pick if pending, otherwise current active). */
     val previewingFamily: Flow<String?> =
@@ -120,7 +120,7 @@ constructor(
                     val code = interactor.applyPending()
                     overridingFamily.value = null
                     if (code == android.graphics.fonts.FontManager.RESULT_SUCCESS) {
-                        restartSystemUiRequired.tryEmit(Unit)
+                        restartRequired.tryEmit(Unit)
                     }
                 }
             }

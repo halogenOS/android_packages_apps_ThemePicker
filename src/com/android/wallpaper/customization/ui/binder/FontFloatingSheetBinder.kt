@@ -17,8 +17,8 @@
 package com.android.wallpaper.customization.ui.binder
 
 import android.app.AlertDialog
-import android.app.StatusBarManager
 import android.content.Context
+import android.os.PowerManager
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.ServiceSpecificException
@@ -118,14 +118,14 @@ object FontFloatingSheetBinder {
                     }
                 }
                 launch {
-                    viewModel.restartSystemUiRequired.collect {
+                    viewModel.restartRequired.collect {
                         AlertDialog.Builder(view.context)
                             .setTitle(R.string.font_picker_restart_dialog_title)
                             .setMessage(R.string.font_picker_restart_dialog_message)
                             .setPositiveButton(R.string.font_picker_restart_dialog_positive) { _, _ ->
                                 view.context
-                                    .getSystemService(StatusBarManager::class.java)
-                                    ?.restartSystemUI()
+                                    .getSystemService(PowerManager::class.java)
+                                    ?.reboot(null)
                             }
                             .setNegativeButton(R.string.font_picker_restart_dialog_negative, null)
                             .setCancelable(false)
