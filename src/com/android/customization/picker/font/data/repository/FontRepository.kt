@@ -59,14 +59,28 @@ constructor(
     /** The family name currently applied via the fabricated overlay, or `null` for stock. */
     val activeFamily: StateFlow<String?> = _activeFamily.asStateFlow()
 
+    private val _defaultFamily = MutableStateFlow<String?>(null)
+    /** The build-time default font family (e.g. "adwaita-sans"), or `null` if unknown. */
+    val defaultFamily: StateFlow<String?> = _defaultFamily.asStateFlow()
+
+    /** Maps font family ID to human-readable display name (e.g. "lato" → "Lato"). */
+    val displayNames: StateFlow<Map<String, String>> = MutableStateFlow(emptyMap())
+
     suspend fun refresh() =
         withContext(bgDispatcher) {
             val manager = fontManager ?: return@withContext
             val families = runCatching { manager.customFontFamilyNames }.getOrDefault(emptyList())
             _installedFamilies.value = families
 
+            val displayNames = runCatching { manager.customFontFamilyDisplayNames }
+                .getOrDefault(emptyMap())
+            (this@FontRepository.displayNames as MutableStateFlow).value = displayNames
+
             val active = runCatching { manager.activeCustomFontFamily }.getOrNull()
             _activeFamily.value = active?.takeIf { families.contains(it) }
+
+            val default = runCatching { manager.defaultFontFamily }.getOrNull()
+            _defaultFamily.value = default?.takeIf { it.isNotEmpty() }
         }
 
     suspend fun setActive(familyName: String?): Int =

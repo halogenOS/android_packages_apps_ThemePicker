@@ -48,6 +48,8 @@ constructor(
 
     private val installedFamilies = interactor.installedFamilies
     private val activeFamily = interactor.activeFamily
+    private val defaultFamily = interactor.defaultFamily
+    private val displayNames = interactor.displayNames
 
     /** Non-null = user has picked something, awaiting Apply. Null = mirror current active. */
     private val overridingFamily = MutableStateFlow<Selection?>(null)
@@ -66,13 +68,38 @@ constructor(
             }
             .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
+    /** Human-readable display name of the family currently being previewed. */
+    val previewingFamilyDisplayName: Flow<String?> =
+        combine(previewingFamily, displayNames) { family, names ->
+            family?.let { names[it] ?: it }
+        }
+            .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
+
     val options: Flow<List<OptionItemViewModel2<String?>>> =
-        combine(installedFamilies, activeFamily) { families, _ -> families }
-            .map { families ->
+        combine(installedFamilies, displayNames, activeFamily, defaultFamily) {
+                families, names, _, default ->
+            Triple(families, names, default)
+        }
+            .map { (families, names, default) ->
+                val stockFamily = default ?: "sans-serif"
                 buildList {
-                    add(buildOption(key = STOCK_KEY, family = null))
+                    add(
+                        buildOption(
+                            key = STOCK_KEY,
+                            family = stockFamily,
+                            isStock = true,
+                            displayNames = names,
+                        )
+                    )
                     families.forEach { family ->
-                        add(buildOption(key = family, family = family))
+                        add(
+                            buildOption(
+                                key = family,
+                                family = family,
+                                isStock = false,
+                                displayNames = names,
+                            )
+                        )
                     }
                 }
             }
@@ -110,17 +137,23 @@ constructor(
         interactor.clearPending()
     }
 
-    private fun buildOption(key: String, family: String?): OptionItemViewModel2<String?> {
+    private fun buildOption(
+        key: String,
+        family: String,
+        isStock: Boolean,
+        displayNames: Map<String, String>,
+    ): OptionItemViewModel2<String?> {
         val isSelected =
             previewingFamily
-                .map { it == family }
+                .map { if (isStock) it == null else it == family }
                 .stateIn(viewModelScope, SharingStarted.Lazily, initialValue = false)
+        val label = if (isStock) null else displayNames[family] ?: family
         return OptionItemViewModel2(
             key = MutableStateFlow(key),
             payload = family,
             text =
-                if (family == null) Text.Resource(R.string.font_picker_stock_option)
-                else Text.Loaded(family),
+                if (isStock) Text.Resource(R.string.font_picker_stock_option)
+                else Text.Loaded(label!!),
             isSelected = isSelected,
             onClicked =
                 isSelected.map { selected ->
@@ -128,8 +161,8 @@ constructor(
                     else {
                         {
                             overridingFamily.value =
-                                if (family == null) Selection.Stock else Selection.Family(family)
-                            interactor.setPending(family)
+                                if (isStock) Selection.Stock else Selection.Family(family)
+                            interactor.setPending(if (isStock) null else family)
                         }
                     }
                 },
