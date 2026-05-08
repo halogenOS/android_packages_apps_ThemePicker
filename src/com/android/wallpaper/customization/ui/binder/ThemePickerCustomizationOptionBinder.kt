@@ -462,9 +462,9 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
                         }
                     }
                     launch {
-                        optionsViewModel.fontPickerViewModel.previewingFamily.collect { family ->
+                        optionsViewModel.fontPickerViewModel.previewingFamilyDisplayName.collect { name ->
                             val label =
-                                family
+                                name
                                     ?: view.context.getString(R.string.font_picker_stock_option)
                             optionFontDescription?.text = label
                         }
