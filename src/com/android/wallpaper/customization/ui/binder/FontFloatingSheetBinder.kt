@@ -21,7 +21,6 @@ import android.content.Context
 import android.os.PowerManager
 import android.graphics.Typeface
 import android.net.Uri
-import android.os.ServiceSpecificException
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -52,7 +51,7 @@ object FontFloatingSheetBinder {
         colorUpdateViewModel: ColorUpdateViewModel,
         lifecycleOwner: LifecycleOwner,
         backgroundDispatcher: CoroutineDispatcher,
-        launchFontFilePicker: ((onResult: (Uri?) -> Unit) -> Unit)?,
+        launchFontFilePicker: ((onResult: (List<Uri>) -> Unit) -> Unit)?,
     ) {
         val viewModel = optionsViewModel.fontPickerViewModel
         val isFloatingSheetActive = { optionsViewModel.selectedOption.value == FONT }
@@ -83,20 +82,11 @@ object FontFloatingSheetBinder {
         installButton.isEnabled = launchFontFilePicker != null
         installButton.setOnClickListener {
             val launcher = launchFontFilePicker ?: return@setOnClickListener
-            launcher { uri ->
-                uri ?: return@launcher
+            launcher { uris ->
+                if (uris.isEmpty()) return@launcher
                 lifecycleOwner.lifecycleScope.launch {
-                    viewModel.installFromUri(uri).onFailure { error ->
-                        val msg =
-                            if (error is ServiceSpecificException
-                                && error.message?.contains("wght") == true
-                            ) {
-                                view.context.getString(
-                                    R.string.font_picker_install_error_not_variable
-                                )
-                            } else {
-                                view.context.getString(R.string.font_picker_install_error_generic)
-                            }
+                    viewModel.installFromUris(uris).onFailure { error ->
+                        val msg = view.context.getString(R.string.font_picker_install_error_generic)
                         Toast.makeText(view.context, msg, Toast.LENGTH_LONG).show()
                     }
                 }

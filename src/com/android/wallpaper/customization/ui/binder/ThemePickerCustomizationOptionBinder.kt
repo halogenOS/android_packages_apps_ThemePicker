@@ -102,7 +102,7 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
         navigateToPackThemeActivity: (Intent) -> Unit,
         navigateToScreenSaverSettingsActivity: () -> Unit,
         iconStyleViewUtil: IconStyleViewUtil,
-        launchFontFilePicker: ((onResult: (Uri?) -> Unit) -> Unit)?,
+        launchFontFilePicker: ((onResult: (List<Uri>) -> Unit) -> Unit)?,
     ) {
         defaultCustomizationOptionsBinder.bind(
             customizationOptionsData,

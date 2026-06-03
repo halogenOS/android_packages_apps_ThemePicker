@@ -678,8 +678,6 @@
     <string name="font_picker_title">Font</string>
     <!-- Font picker: label for the row that opens a file picker to install a new font. [CHAR LIMIT=30] -->
     <string name="font_picker_install_label">Install font</string>
-    <!-- Font picker: toast shown when installing a non-variable font file. [CHAR LIMIT=NONE] -->
-    <string name="font_picker_install_error_not_variable">Only variable fonts are supported. The selected font does not have a weight axis.</string>
     <!-- Font picker: generic toast shown when font installation fails. [CHAR LIMIT=NONE] -->
     <string name="font_picker_install_error_generic">Failed to install font.</string>
     <!-- Font picker: dialog title after applying a font. [CHAR LIMIT=NONE] -->

@@ -132,6 +132,28 @@ constructor(
 
     suspend fun installFromUri(uri: Uri): Result<String> = interactor.installFromUri(uri)
 
+    /**
+     * Installs the user's picked file(s). A single ZIP archive is expanded into its font entries;
+     * otherwise each URI is treated as a font file and the set is installed as one batch, with
+     * variants clustered into families by the framework.
+     */
+    suspend fun installFromUris(uris: List<Uri>): Result<List<String>> {
+        if (uris.isEmpty()) return Result.success(emptyList())
+        if (uris.size == 1 && isZip(uris.first())) {
+            return interactor.installFromZip(uris.first())
+        }
+        return interactor.installFromUris(uris)
+    }
+
+    private fun isZip(uri: Uri): Boolean {
+        val type = context.contentResolver.getType(uri)
+        if (type == "application/zip" || type == "application/x-zip-compressed") {
+            return true
+        }
+        val extension = uri.lastPathSegment?.substringAfterLast('.', "")
+        return extension.equals("zip", ignoreCase = true)
+    }
+
     fun resetPreview() {
         overridingFamily.value = null
         interactor.clearPending()
