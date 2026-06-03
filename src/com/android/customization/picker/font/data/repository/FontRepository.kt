@@ -23,8 +23,11 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.android.wallpaper.picker.di.modules.BackgroundDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.ByteArrayInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
+import java.util.zip.ZipInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -107,41 +110,97 @@ constructor(
         }
 
     /**
-     * Install a font file pointed at by [uri] and register it as a new single-font family.
+     * Install a single font file pointed at by [uri], clustering it into a family by its embedded
+     * typographic family name (augmenting an existing family of that name if present).
      *
-     * The framework parses the font's name table and uses the PostScript name as the family
-     * identifier. Returns the resolved family name on success.
-     *
-     * The font bytes are streamed through an anonymous pipe rather than handing the original
-     * URI's file descriptor to system_server. The original FD is anchored on the source inode
-     * (e.g. a file on `/sdcard`, labelled `fuse:s0`), and SELinux denies system_server `read`
-     * on that label regardless of who opened the FD. By copying through a pipe whose inode
-     * carries this app's domain (`appdomain:fifo_file`), system_server reads against a label
-     * that is already in its allowlist.
+     * Returns the resolved family name on success.
      */
     suspend fun installFromUri(uri: Uri): Result<String> =
+        installFromUris(listOf(uri)).map { it.first() }
+
+    /**
+     * Install one or more font files at once. Each file is clustered into a family by its embedded
+     * family name; variants sharing a family (e.g. Regular + Bold) are merged into one. Returns the
+     * names of the families that were created or augmented.
+     */
+    suspend fun installFromUris(uris: List<Uri>): Result<List<String>> =
         withContext(bgDispatcher) {
             val manager = fontManager
                 ?: return@withContext Result.failure(IllegalStateException("FontManager unavailable"))
-            Log.d(TAG, "installFromUri: streaming $uri through pipe")
-            runCatching { installViaPipe(manager, uri) }
-                .also { result ->
-                    result.onFailure { e -> Log.e(TAG, "installFromUri: failed", e) }
-                }
+            Log.d(TAG, "installFromUris: streaming ${uris.size} file(s) through pipes")
+            runCatching {
+                installStreams(manager, uris.map { uri -> { openFontStream(uri) } })
+            }.onFailure { e -> Log.e(TAG, "installFromUris: failed", e) }
         }
 
-    private suspend fun installViaPipe(manager: FontManager, uri: Uri): String =
-        coroutineScope {
-            val pipe = ParcelFileDescriptor.createReliablePipe()
-            val readSide = pipe[0]
-            val writeSide = pipe[1]
+    /**
+     * Install every font file contained in the ZIP archive at [uri]. Entries that are not font
+     * files are ignored. The clustered families are returned.
+     */
+    suspend fun installFromZip(uri: Uri): Result<List<String>> =
+        withContext(bgDispatcher) {
+            val manager = fontManager
+                ?: return@withContext Result.failure(IllegalStateException("FontManager unavailable"))
+            Log.d(TAG, "installFromZip: expanding $uri")
+            runCatching {
+                val fonts = readFontEntriesFromZip(uri)
+                if (fonts.isEmpty()) {
+                    throw IOException("No font files found in archive")
+                }
+                installStreams(manager, fonts.map { bytes -> { ByteArrayInputStream(bytes) } })
+            }.onFailure { e -> Log.e(TAG, "installFromZip: failed", e) }
+        }
 
-            val writerDeferred = async(bgDispatcher) {
+    private fun openFontStream(uri: Uri): InputStream =
+        context.contentResolver.openInputStream(uri)
+            ?: throw IOException("openInputStream returned null for $uri")
+
+    /** Reads the font-file entries out of a ZIP archive into memory. Font files are small. */
+    private fun readFontEntriesFromZip(uri: Uri): List<ByteArray> {
+        val fonts = mutableListOf<ByteArray>()
+        ZipInputStream(openFontStream(uri)).use { zip ->
+            var entry = zip.nextEntry
+            while (entry != null) {
+                if (!entry.isDirectory && hasFontExtension(entry.name)) {
+                    fonts.add(zip.readBytes())
+                }
+                zip.closeEntry()
+                entry = zip.nextEntry
+            }
+        }
+        return fonts
+    }
+
+    private fun hasFontExtension(name: String): Boolean =
+        FONT_EXTENSIONS.any { name.substringAfterLast('.', "").equals(it, ignoreCase = true) }
+
+    /**
+     * Streams each font source through its own anonymous pipe and hands the read ends to the
+     * framework in a single batch install.
+     *
+     * The font bytes are streamed through pipes rather than handing the original URIs' file
+     * descriptors to system_server. An original FD is anchored on the source inode (e.g. a file on
+     * `/sdcard`, labelled `fuse:s0`), and SELinux denies system_server `read` on that label
+     * regardless of who opened the FD. By copying through a pipe whose inode carries this app's
+     * domain (`appdomain:fifo_file`), system_server reads against an already-allowlisted label.
+     *
+     * Writers run concurrently because the framework drains the read ends sequentially within one
+     * binder call and pipe buffers are bounded — a writer whose reader has not been reached yet
+     * blocks until then, so they must all be in flight at once.
+     */
+    private suspend fun installStreams(
+        manager: FontManager,
+        streams: List<() -> InputStream>,
+    ): List<String> = coroutineScope {
+        val pipes = streams.map { ParcelFileDescriptor.createReliablePipe() }
+        val readSides = pipes.map { it[0] }
+
+        val writers = pipes.mapIndexed { index, pipe ->
+            val writeSide = pipe[1]
+            async(bgDispatcher) {
                 try {
                     FileOutputStream(writeSide.fileDescriptor).use { out ->
-                        val input = context.contentResolver.openInputStream(uri)
-                            ?: throw IOException("openInputStream returned null for $uri")
-                        input.use { it.copyTo(out) }
+                        streams[index]().use { it.copyTo(out) }
                     }
                     writeSide.close()
                 } catch (t: Throwable) {
@@ -149,20 +208,26 @@ constructor(
                     throw t
                 }
             }
-
-            try {
-                val familyName = readSide.use { manager.installCustomFontFamilyFromFile(it) }
-                writerDeferred.await()
-                _installedFamilies.value = (_installedFamilies.value + familyName).distinct()
-                Log.d(TAG, "installFromUri: success, familyName=$familyName")
-                familyName
-            } catch (t: Throwable) {
-                writerDeferred.cancel()
-                throw t
-            }
         }
+
+        try {
+            val families = try {
+                manager.installCustomFontFamilyFromFiles(readSides)
+            } finally {
+                readSides.forEach { runCatching { it.close() } }
+            }
+            writers.forEach { it.await() }
+            _installedFamilies.value = (_installedFamilies.value + families).distinct()
+            Log.d(TAG, "installStreams: success, families=$families")
+            families
+        } catch (t: Throwable) {
+            writers.forEach { it.cancel() }
+            throw t
+        }
+    }
 
     companion object {
         private const val TAG = "FontRepository"
+        private val FONT_EXTENSIONS = listOf("ttf", "otf", "ttc", "otc")
     }
 }

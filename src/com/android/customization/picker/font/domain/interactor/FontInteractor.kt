@@ -70,6 +70,11 @@ class FontInteractor @Inject constructor(private val repository: FontRepository)
 
     suspend fun installFromUri(uri: Uri): Result<String> = repository.installFromUri(uri)
 
+    suspend fun installFromUris(uris: List<Uri>): Result<List<String>> =
+        repository.installFromUris(uris)
+
+    suspend fun installFromZip(uri: Uri): Result<List<String>> = repository.installFromZip(uri)
+
     sealed class Selection {
         object Unset : Selection()
 
