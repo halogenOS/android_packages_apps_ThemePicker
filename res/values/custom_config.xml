@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    SPDX-FileCopyrightText: The halogenOS Project
+    SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Clock plugin packages that the picker loads on user builds, in addition to the stock clocks. -->
+    <string-array name="config_clockPluginAllowlist" translatable="false" />
+</resources>

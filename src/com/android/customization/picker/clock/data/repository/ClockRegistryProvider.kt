@@ -17,6 +17,7 @@ package com.android.customization.picker.clock.data.repository
 
 import android.content.Context
 import android.view.LayoutInflater
+import com.android.themepicker.R
 import com.android.systemui.plugins.PluginManager
 import com.android.systemui.shared.clocks.ClockRegistry
 import com.android.systemui.shared.clocks.DefaultClockProvider
@@ -75,7 +76,7 @@ class ClockRegistryProvider(
                 "com.android.systemui.clocks.metro",
                 "com.android.systemui.clocks.numoverlap",
                 "com.android.systemui.clocks.weather",
-            ),
+            ) + context.resources.getStringArray(R.array.config_clockPluginAllowlist),
             PluginEnabler.AlwaysEnabled(),
             Executors.newSingleThreadExecutor(),
             UncaughtExceptionPreHandlerManager_Factory.create().get(),
