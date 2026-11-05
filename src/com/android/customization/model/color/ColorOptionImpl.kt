@@ -39,7 +39,7 @@ open class ColorOptionImpl(
     isDefault: Boolean = false,
     index: Int = -1,
     private val previewInfo: PreviewInfo = PreviewInfo(intArrayOf(), intArrayOf()),
-    val type: ColorType = ColorType.WALLPAPER_COLOR,
+    type: ColorType = ColorType.WALLPAPER_COLOR,
 ) :
     ColorOption(
         title,
@@ -50,12 +50,13 @@ open class ColorOptionImpl(
         index,
         isThemeServiceEnabled,
         isColorPickerUpdateEnabled,
+        type,
     ) {
 
     class PreviewInfo(@ColorInt val lightColors: IntArray, @ColorInt val darkColors: IntArray) :
         ColorOption.PreviewInfo {
         @ColorInt
-        fun resolveColors(darkTheme: Boolean): IntArray {
+        override fun resolveColors(darkTheme: Boolean): IntArray {
             return if (darkTheme) darkColors else lightColors
         }
     }
@@ -96,9 +97,8 @@ open class ColorOptionImpl(
          * Use this to build a simplified color seed option for use with Theme Service. It creates
          * an instance of [ColorOptionImpl] for backwards code compatibility.
          *
-         * Two color seed options are equivalent if they have the same seed color and source. The
-         * default style is not compared since a color seed option encapsulates the color seed
-         * primarily, and the style could be chosen separately to be paired with this color seed.
+         * Two color seed options are equivalent if they have the same seed color, source and style,
+         * since the picker offers the same seed in several styles.
          */
         // TODO (b/440146498): after fully deprecating ColorCustomizationManager, simplify this
         //  to output a standalone data class without dependence on ColorOptionImpl
@@ -107,6 +107,7 @@ open class ColorOptionImpl(
             source: String?,
             seedColor: Int,
             @ThemeStyle.Type defaultStyle: Int,
+            type: ColorType = ColorType.WALLPAPER_COLOR,
         ): ColorOptionImpl {
             val lightColors =
                 ColorProviderUtil.getColorPreview(
@@ -129,12 +130,14 @@ open class ColorOptionImpl(
                     seedColor = seedColor,
                     style = defaultStyle,
                     previewInfo = PreviewInfo(lightColors, darkColors),
+                    type = type,
                     isThemeServiceEnabled = true,
                 ) {
                 override fun isEquivalent(other: ColorOption?): Boolean {
                     return other is ColorOptionImpl &&
                         this.source == other.source &&
-                        this.seedColor == other.seedColor
+                        this.seedColor == other.seedColor &&
+                        this.style == other.style
                 }
             }
         }

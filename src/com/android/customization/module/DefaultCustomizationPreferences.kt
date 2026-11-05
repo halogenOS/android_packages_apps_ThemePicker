@@ -59,13 +59,4 @@ constructor(@ApplicationContext context: Context) :
             .putBoolean(CustomizationPreferences.KEY_THEMED_ICON_ENABLED, enabled)
             .apply()
     }
-
-    override fun getFreeformColorHue(): Float? {
-        val hue = sharedPrefs.getFloat(CustomizationPreferences.KEY_FREEFORM_COLOR_HUE, -1f)
-        return if (hue == -1f) null else hue
-    }
-
-    override fun setFreeformColorHue(hue: Float) {
-        sharedPrefs.edit().putFloat(CustomizationPreferences.KEY_FREEFORM_COLOR_HUE, hue).apply()
-    }
 }

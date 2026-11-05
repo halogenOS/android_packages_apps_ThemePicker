@@ -19,9 +19,10 @@ package com.android.wallpaper.customization.ui.viewmodel
 import android.content.Context
 import android.net.Uri
 import com.android.customization.picker.font.domain.interactor.FontInteractor
+import com.android.customization.picker.font.shared.model.FontOrigin
+import com.android.customization.picker.font.shared.model.InstalledFontFamily
 import com.android.themepicker.R
 import com.android.wallpaper.picker.common.text.ui.viewmodel.Text
-import com.android.wallpaper.picker.option.ui.viewmodel.OptionItemViewModel2
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -32,11 +33,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
 
 class FontPickerViewModel
 @AssistedInject
@@ -46,10 +45,7 @@ constructor(
     @Assisted private val viewModelScope: CoroutineScope,
 ) {
 
-    private val installedFamilies = interactor.installedFamilies
     private val activeFamily = interactor.activeFamily
-    private val defaultFamily = interactor.defaultFamily
-    private val displayNames = interactor.displayNames
 
     /** Non-null = user has picked something, awaiting Apply. Null = mirror current active. */
     private val overridingFamily = MutableStateFlow<Selection?>(null)
@@ -68,40 +64,36 @@ constructor(
             }
             .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
-    /** Human-readable display name of the family currently being previewed. */
-    val previewingFamilyDisplayName: Flow<String?> =
-        combine(previewingFamily, displayNames) { family, names ->
-            family?.let { names[it] ?: it }
-        }
+    // The default font first, then the installed families by name
+    private val fonts: Flow<List<FontViewModel>> =
+        combine(interactor.families, interactor.defaultFamily) { families, default ->
+                // The framework lists the families in an unspecified order.
+                val sortedFamilies =
+                    families.sortedWith(
+                        compareBy(String.CASE_INSENSITIVE_ORDER, InstalledFontFamily::displayName)
+                            .thenBy(InstalledFontFamily::name)
+                    )
+                listOf(describeDefaultFont(default)) + sortedFamilies.map(::describeFont)
+            }
             .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
-    val options: Flow<List<OptionItemViewModel2<String?>>> =
-        combine(installedFamilies, displayNames, activeFamily, defaultFamily) {
-                families, names, _, default ->
-            Triple(families, names, default)
-        }
-            .map { (families, names, default) ->
-                val stockFamily = default ?: "sans-serif"
-                buildList {
-                    add(
-                        buildOption(
-                            key = STOCK_KEY,
-                            family = stockFamily,
-                            isStock = true,
-                            displayNames = names,
-                        )
-                    )
-                    families.forEach { family ->
-                        add(
-                            buildOption(
-                                key = family,
-                                family = family,
-                                isStock = false,
-                                displayNames = names,
-                            )
-                        )
+    /** The font being previewed. */
+    val previewingFont: Flow<FontViewModel?> =
+        combine(previewingFamily, fonts) { family, fonts ->
+                fonts.firstOrNull { it.family == family }
+            }
+            .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
+
+    /** The fonts of the Font sheet in sections, leaving out empty ones. */
+    val sections: Flow<List<FontSectionViewModel>> =
+        fonts
+            .map { allFonts ->
+                allFonts
+                    .groupBy { it.origin }
+                    .toSortedMap(compareBy { it.sectionRank })
+                    .map { (origin, sectionFonts) ->
+                        FontSectionViewModel(origin = origin, fonts = sectionFonts)
                     }
-                }
             }
             .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
@@ -159,38 +151,27 @@ constructor(
         interactor.clearPending()
     }
 
-    private fun buildOption(
-        key: String,
-        family: String,
-        isStock: Boolean,
-        displayNames: Map<String, String>,
-    ): OptionItemViewModel2<String?> {
-        val isSelected =
-            previewingFamily
-                .map { if (isStock) it == null else it == family }
-                .stateIn(viewModelScope, SharingStarted.Lazily, initialValue = false)
-        val label = if (isStock) null else displayNames[family] ?: family
-        return OptionItemViewModel2(
-            key = MutableStateFlow(key),
-            payload = family,
-            text =
-                if (isStock) Text.Resource(R.string.font_picker_stock_option)
-                else Text.Loaded(label!!),
-            isSelected = isSelected,
-            onClicked =
-                isSelected.map { selected ->
-                    if (selected) null
-                    else {
-                        {
-                            overridingFamily.value =
-                                if (isStock) Selection.Stock else Selection.Family(family)
-                            interactor.setPending(if (isStock) null else family)
-                        }
-                    }
-                },
-            onLongClicked = null,
-        )
+    /** Previews [family] until Apply, or the default font when [family] is `null`. */
+    fun previewFont(family: String?) {
+        overridingFamily.value = family?.let { Selection.Family(it) } ?: Selection.Stock
+        interactor.setPending(family)
     }
+
+    private fun describeDefaultFont(defaultFamily: String?) =
+        FontViewModel(
+            family = null,
+            typefaceFamily = defaultFamily ?: STOCK_TYPEFACE_FAMILY,
+            name = Text.Resource(R.string.font_picker_stock_option),
+            origin = FontOrigin.INCLUDED,
+        )
+
+    private fun describeFont(family: InstalledFontFamily) =
+        FontViewModel(
+            family = family.name,
+            typefaceFamily = family.name,
+            name = Text.Loaded(family.displayName),
+            origin = family.origin,
+        )
 
     private sealed class Selection {
         object Stock : Selection()
@@ -204,6 +185,6 @@ constructor(
     }
 
     companion object {
-        private const val STOCK_KEY = "__stock__"
+        private const val STOCK_TYPEFACE_FAMILY = "sans-serif"
     }
 }

@@ -30,6 +30,8 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,27 +41,33 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.android.themepicker.R
 
 /**
  * UI for the drill down to fine tune a selected option. This includes a floating bottom sheet and a
- * cancel and confirm button.
+ * cancel and confirm button. While [isConfirmInProgress], the confirm button shows progress. Cancel
+ * and back do nothing while [isCancelEnabled] is `false`.
  */
 @Composable
 fun DrillDownFloatingSheet(
     onCancel: () -> Unit,
     onConfirm: () -> Unit,
-    navigateToLanding: () -> Unit,
     modifier: Modifier = Modifier,
+    isConfirmEnabled: Boolean = true,
+    isConfirmInProgress: Boolean = false,
+    isCancelEnabled: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val colorScheme: CustomColorScheme = LocalAnimatedColorScheme.current
 
     // Handle back navigation when color variant picker is active.
     BackHandler {
-        onCancel()
-        navigateToLanding()
+        if (isCancelEnabled) {
+            onCancel()
+        }
     }
 
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -87,10 +95,8 @@ fun DrillDownFloatingSheet(
         ) {
             Button(
                 modifier = Modifier.width(72.dp).height(56.dp),
-                onClick = {
-                    onCancel()
-                    navigateToLanding()
-                },
+                onClick = onCancel,
+                enabled = isCancelEnabled,
                 colors =
                     ButtonColors(
                         containerColor = colorScheme.secondaryContainer,
@@ -107,23 +113,30 @@ fun DrillDownFloatingSheet(
             }
             Button(
                 modifier = Modifier.width(72.dp).height(56.dp),
-                onClick = {
-                    onConfirm()
-                    navigateToLanding()
-                },
+                onClick = onConfirm,
+                enabled = isConfirmEnabled && !isConfirmInProgress,
                 colors =
-                    ButtonColors(
+                    ButtonDefaults.buttonColors(
                         containerColor = colorScheme.primary,
                         contentColor = colorScheme.onPrimary,
-                        disabledContainerColor = colorScheme.onSurface,
-                        disabledContentColor = colorScheme.onSurface,
                     ),
             ) {
-                Icon(
-                    painter = painterResource(com.android.wallpaper.R.drawable.ic_check_wallpaper),
-                    contentDescription = stringResource(R.string.color_variant_editor_apply),
-                    modifier = Modifier.size(24.dp),
-                )
+                val confirmLabel = stringResource(R.string.color_variant_editor_apply)
+                if (isConfirmInProgress) {
+                    CircularProgressIndicator(
+                        modifier =
+                            Modifier.size(24.dp).semantics { contentDescription = confirmLabel },
+                        color = colorScheme.onSurface,
+                        strokeWidth = 2.5.dp,
+                    )
+                } else {
+                    Icon(
+                        painter =
+                            painterResource(com.android.wallpaper.R.drawable.ic_check_wallpaper),
+                        contentDescription = confirmLabel,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
             }
         }
     }

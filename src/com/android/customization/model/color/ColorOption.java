@@ -30,6 +30,7 @@ import com.android.customization.model.CustomizationManager;
 import com.android.customization.model.CustomizationOption;
 import com.android.customization.model.color.ColorProviderUtil.ColorSource;
 import com.android.customization.module.logging.ThemesUserEventLogger;
+import com.android.customization.picker.color.shared.model.ColorType;
 import com.android.themepicker.R;
 
 import org.json.JSONException;
@@ -65,10 +66,11 @@ public abstract class ColorOption implements CustomizationOption<ColorOption> {
 
     private final boolean mIsThemeServiceEnabled;
     private final boolean mIsColorPickerUpdateEnabled;
+    private final ColorType mType;
 
     protected ColorOption(String title, Map<String, String> overlayPackages, boolean isDefault,
             int seedColor, @ThemeStyle.Type Integer style, int index,
-            boolean isThemeServiceEnabled, boolean isColorPickerUpdateEnabled) {
+            boolean isThemeServiceEnabled, boolean isColorPickerUpdateEnabled, ColorType type) {
         mTitle = title;
         mIsDefault = isDefault;
         mSeedColor = seedColor;
@@ -77,6 +79,7 @@ public abstract class ColorOption implements CustomizationOption<ColorOption> {
         mPackagesByCategory = Collections.unmodifiableMap(removeNullValues(overlayPackages));
         mIsThemeServiceEnabled = isThemeServiceEnabled;
         mIsColorPickerUpdateEnabled = isColorPickerUpdateEnabled;
+        mType = type;
     }
 
     @Override
@@ -260,9 +263,21 @@ public abstract class ColorOption implements CustomizationOption<ColorOption> {
     }
 
     /**
+     * @return the type of this color option, which sets the section it is shown in
+     */
+    public ColorType getType() {
+        return mType;
+    }
+
+    /**
      * The preview information of {@link ColorOption}
      */
     public interface PreviewInfo {
+        /**
+         * @return the four colors that preview this option in the dark or the light theme
+         */
+        @ColorInt
+        int[] resolveColors(boolean darkTheme);
     }
 
 }

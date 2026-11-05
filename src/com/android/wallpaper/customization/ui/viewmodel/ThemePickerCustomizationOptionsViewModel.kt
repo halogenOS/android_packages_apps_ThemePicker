@@ -27,13 +27,13 @@ import com.android.customization.picker.mode.ui.viewmodel.DarkModeViewModel
 import com.android.customization.picker.quickaffordance.ui.viewmodel.KeyguardQuickAffordancePickerViewModel2
 import com.android.customization.picker.settings.ui.viewmodel.ColorContrastSectionViewModel2
 import com.android.wallpaper.config.BaseFlags
-import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.APP_ICONS
-import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.COLORS
-import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.FONT
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.GRID
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerLockCustomizationOption.CLOCK
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerLockCustomizationOption.SHORTCUTS
+import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerStyleCustomizationOption.COLORS
+import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerStyleCustomizationOption.FONT
+import com.android.wallpaper.model.PickerPage
 import com.android.wallpaper.picker.common.preview.ui.viewmodel.WorkspacePreviewScreen
 import com.android.wallpaper.picker.customization.ui.view.ApplyButton
 import com.android.wallpaper.picker.customization.ui.view.ApplyButton.ApplyButtonState.APPLY_BUTTON_DISABLED
@@ -50,11 +50,9 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -62,7 +60,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -142,27 +139,14 @@ constructor(
     override val selectedOption = defaultCustomizationOptionsViewModel.selectedOption
 
     /**
-     * The home screen preview workspace rotates every 3 seconds when the user is in the color
-     * picker. Otherwise only the Launcher workspace is shown.
+     * The screen the compose preview of [page] shows in place of the workspace, or `null` where the
+     * page previews the workspace itself.
      */
-    val workspacePreviewScreen =
-        selectedOption.flatMapLatest {
-            if (
-                it == ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.COLORS
-            ) {
-                flow {
-                    val screenList = WorkspacePreviewScreen.entries
-                    var idx = 0
-                    emit(screenList[idx])
-                    while (true) {
-                        delay(3000.milliseconds)
-                        idx = (idx + 1) % screenList.size
-                        emit(screenList[idx])
-                    }
-                }
-            } else {
-                flowOf(WorkspacePreviewScreen.LAUNCHER)
-            }
+    fun workspacePreviewScreen(page: PickerPage): WorkspacePreviewScreen? =
+        when (page) {
+            PickerPage.LOCK_SCREEN,
+            PickerPage.HOME_SCREEN -> null
+            PickerPage.STYLE -> WorkspacePreviewScreen.SHADE
         }
 
     override val discardChangesDialogViewModel =
@@ -362,17 +346,6 @@ constructor(
             context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
         )
     }
-
-    val shouldShowToolbar =
-        combine(selectedOption, colorPickerViewModel2.currentScreen) {
-            selectedOption,
-            colorPickerScreen ->
-            val isInDrillDown =
-                selectedOption == COLORS &&
-                    (colorPickerScreen == ColorPickerViewModel.Screen.VARIANT_PICKER ||
-                        colorPickerScreen == ColorPickerViewModel.Screen.FREEFORM_PICKER)
-            !isInDrillDown
-        }
 
     @ViewModelScoped
     @AssistedFactory

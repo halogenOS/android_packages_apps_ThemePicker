@@ -15,64 +15,65 @@
  */
 package com.android.customization.picker.color.ui.viewmodel
 
-import android.content.Context
 import android.content.theming.ThemeStyle
 import android.util.Log
 import com.android.customization.model.color.ColorOption
-import com.android.customization.model.color.ColorOptionImpl
-import com.android.customization.model.color.ColorProviderUtil.hueToColorOption
 import com.android.customization.module.logging.ThemesUserEventLogger
 import com.android.customization.picker.color.domain.interactor.ColorPickerInteractor
-import com.android.customization.picker.color.shared.model.ColorType
-import com.android.themepicker.R
 import com.android.wallpaper.config.BaseFlags
-import com.android.wallpaper.picker.common.icon.ui.viewmodel.Icon
-import com.android.wallpaper.picker.common.text.ui.viewmodel.Text
 import com.android.wallpaper.picker.customization.ui.viewmodel.ColorUpdateViewModel
-import com.android.wallpaper.picker.customization.ui.viewmodel.FloatingToolbarTabViewModel
-import com.android.wallpaper.picker.option.ui.viewmodel.OptionItemViewModel2
+import com.android.wallpaper.picker.di.modules.BackgroundDispatcher
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 /** Models UI state for a color picker experience. */
-@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class ColorPickerViewModel
 @AssistedInject
 constructor(
-    @ApplicationContext context: Context,
     private val colorUpdateViewModel: ColorUpdateViewModel,
     private val interactor: ColorPickerInteractor,
     private val logger: ThemesUserEventLogger,
     baseFlags: BaseFlags,
+    @BackgroundDispatcher backgroundDispatcher: CoroutineDispatcher,
     @Assisted private val viewModelScope: CoroutineScope,
 ) {
     val selectedColorOption = interactor.selectedColorOption
 
+    /** Sections of the Colors sheet in the order they are shown, leaving out empty ones */
+    val colorSections: StateFlow<List<ColorSectionViewModel>> =
+        combine(
+                interactor.colorOptions,
+                interactor.savedColors,
+                selectedColorOption,
+                ::buildColorSections,
+            )
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    // The swatch tapped last on the Colors sheet
+    private val overridingSwatchKey = MutableStateFlow<SwatchKey?>(null)
+
     // The overriding color on the color picker landing screen
-    private val _overridingColorOption = MutableStateFlow<ColorOption?>(null)
-    // The overriding color on the color picker landing screen
-    val overridingColorOption = _overridingColorOption.asStateFlow()
+    val overridingColorOption: StateFlow<ColorOption?> =
+        combine(colorSections, overridingSwatchKey) { sections, key ->
+                key?.let { sections.findSwatch(it)?.option }
+            }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     // The color being previewed on the color picker landing screen
     val previewingColorOption =
         combine(overridingColorOption, selectedColorOption) { overriding, selected ->
@@ -80,73 +81,35 @@ constructor(
             }
             .distinctUntilChanged()
 
-    // Used in updated variant & freeform picker
-    val previewingColorOptionKey = previewingColorOption.map { it?.getKey() }
-
-    /**
-     * Returns a key to uniquely identify the color option for equivalence. This function only
-     * compares source and seed color, and is meant to be used in the color seed & variant picker.
-     */
-    private fun ColorOption.getKey(): String {
-        return "${this.source}::${this.seedColor}"
-    }
-
-    // Screen, used in updated variant & freeform picker
-    enum class Screen {
-        LANDING,
-        VARIANT_PICKER,
-        FREEFORM_PICKER,
-    }
-
-    private val _currentScreen = MutableStateFlow(Screen.LANDING)
-    val currentScreen = _currentScreen.asStateFlow()
-
-    fun setScreen(screen: Screen) {
-        _currentScreen.value = screen
-    }
-
-    // Slider values, used in freeform picker
-    private val selectedHue = interactor.freeformColorHue
-    private val overrideHue = MutableStateFlow<Float?>(null)
-    val hueSliderPosition =
-        combine(selectedHue, overrideHue) { selected, override ->
-            override ?: selected ?: HUE_INIT_VALUE
-        }
-    // The freeform color selected but not yet confirmed by user
-    private val tempFreeformColorOption = hueSliderPosition.map { hue -> hueToColorOption(hue) }
-    // The overriding color across screens, including the freeform color screen
-    val tempOverridingColorOption =
-        currentScreen.flatMapLatest {
-            when (it) {
-                Screen.FREEFORM_PICKER -> tempFreeformColorOption
-                else -> _overridingColorOption
+    /** The swatch being previewed, otherwise the applied one */
+    val previewingSwatch: StateFlow<ColorSwatchViewModel?> =
+        combine(colorSections, overridingSwatchKey, selectedColorOption) { sections, key, selected
+                ->
+                key?.let { sections.findSwatch(it) } ?: selected?.let { sections.findApplied(it) }
             }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val editor =
+        ColorEditorViewModel(
+            interactor = interactor,
+            scope = viewModelScope,
+            backgroundDispatcher = backgroundDispatcher,
+            onSaved = { id -> previewSwatch(SwatchKey.Saved(id)) },
+        )
+
+    // The overriding color across screens, including the color editor
+    val tempOverridingColorOption =
+        combine(editor.previewOption, overridingColorOption) { draft, overriding ->
+            draft ?: overriding
         }
-    // The color being previewed across screens, including the freeform color screen
+    // The color being previewed across screens, including the color editor
     val tempPreviewingColorOption =
         combine(tempOverridingColorOption, selectedColorOption) { overriding, selected ->
                 overriding ?: selected
             }
             .distinctUntilChanged()
 
-    fun updateHue(hue: Float) {
-        overrideHue.value = hue
-    }
-
-    fun cancelFreeformColor() {
-        overrideHue.value = null
-    }
-
-    fun confirmFreeformColor() {
-        val hue = overrideHue.value ?: if (selectedHue.value == null) HUE_INIT_VALUE else null
-        hue?.let {
-            interactor.saveFreeformColor(it)
-            _overridingColorOption.value = hueToColorOption(it)
-        }
-    }
-
     // Style options, used in variant picker
-    val styleOptions = interactor.styleList
     val selectedStyle = interactor.selectedStyle.distinctUntilChanged()
     private val _overridingStyle = MutableStateFlow<Int?>(null)
     // Style selected but not yet confirmed by user, this is reset to null if the user cancels
@@ -155,7 +118,7 @@ constructor(
         combine(_overridingStyle, _tempOverridingStyle) { saved, temp -> temp ?: saved }
             .distinctUntilChanged()
     val previewingStyle =
-        combine(selectedStyle, overridingStyle, selectedColorOption, overridingColorOption) {
+        combine(selectedStyle, overridingStyle, selectedColorOption, tempOverridingColorOption) {
                 selectedStyle,
                 overridingStyle,
                 selectedColor,
@@ -203,135 +166,24 @@ constructor(
         _tempOverridingStyle.value = null
     }
 
-    val colorSeedOptions =
-        interactor.colorOptions.map { colorOptions ->
-            colorOptions.map { colorTypeToOptions ->
-                colorTypeToOptions.first to
-                    colorTypeToOptions.second.mapIndexed { index, colorOption ->
-                        colorOption as ColorOptionImpl
-                        ColorOptionViewModel(
-                            icon = ColorOptionIconViewModel.fromColorOption(colorOption),
-                            key = colorOption.getKey(),
-                            onClick = {
-                                viewModelScope.launch {
-                                    _overridingColorOption.value = colorOption
-                                    // Reset overriding style when a new option
-                                    // is selected.
-                                    resetStyleOptionSelection()
-                                }
-                            },
-                            text =
-                                Text.Loaded(colorOption.getContentDescription(context).toString()),
-                            enableDrillDown = styleOptions.contains(colorOption.style),
-                        )
-                    }
-            }
+    fun previewSwatch(key: SwatchKey) {
+        overridingSwatchKey.value = key
+        resetStyleOptionSelection()
+    }
+
+    /** Runs the edit button in the header of the Colors sheet */
+    fun startEditor(action: SwatchEditAction) =
+        when (action) {
+            is SwatchEditAction.Edit -> editor.startEditing(action.color)
+            is SwatchEditAction.NewFromThis -> editor.startNew(action.details)
         }
 
-    private val _overridingColorOptionIndex = MutableStateFlow<Int>(0)
-    val overridingColorOptionIndex = _overridingColorOptionIndex.asStateFlow()
-
-    private val selectedColorTypeTabId = MutableStateFlow<ColorType?>(null)
-
-    /** View-models for each color tab. */
-    val colorTypeTabs: Flow<List<FloatingToolbarTabViewModel>> =
-        combine(interactor.colorOptions, selectedColorTypeTabId) {
-            colorOptions,
-            selectedColorTypeIdOrNull ->
-            colorOptions.mapIndexedNotNull { index, colorTypeToOptions ->
-                val colorType = colorTypeToOptions.first
-                if (colorType != ColorType.WALLPAPER_COLOR && colorType != ColorType.PRESET_COLOR) {
-                    return@mapIndexedNotNull null
-                }
-                val isSelected =
-                    (selectedColorTypeIdOrNull == null && index == 0) ||
-                        selectedColorTypeIdOrNull == colorType
-
-                val name =
-                    when (colorType) {
-                        ColorType.WALLPAPER_COLOR ->
-                            context.resources.getString(R.string.wallpaper_color_tab)
-                        ColorType.PRESET_COLOR ->
-                            context.resources.getString(R.string.preset_color_tab_2)
-                        else -> ""
-                    }
-
-                FloatingToolbarTabViewModel(
-                    Icon.Resource(
-                        res =
-                            when (colorType) {
-                                ColorType.WALLPAPER_COLOR ->
-                                    com.android.wallpaper.R.drawable.ic_baseline_wallpaper_24
-                                ColorType.PRESET_COLOR -> R.drawable.ic_colors
-                                else -> 0
-                            },
-                        contentDescription = Text.Loaded(name),
-                    ),
-                    name,
-                    isSelected,
-                ) {
-                    if (!isSelected) {
-                        this.selectedColorTypeTabId.value = colorType
-                    }
-                }
-            }
-        }
-
-    /** View-models for each color tab subheader */
-    val colorTypeTabSubheader: Flow<String> =
-        selectedColorTypeTabId.mapNotNull { selectedColorTypeIdOrNull ->
-            when (selectedColorTypeIdOrNull ?: ColorType.WALLPAPER_COLOR) {
-                ColorType.WALLPAPER_COLOR ->
-                    context.resources.getString(R.string.wallpaper_color_subheader)
-                ColorType.PRESET_COLOR ->
-                    context.resources.getString(R.string.preset_color_subheader)
-                else -> null
-            }
-        }
-
-    /** The list of all color options mapped by their color type */
-    private val allColorOptions:
-        Flow<List<Pair<ColorType, List<OptionItemViewModel2<ColorOptionIconViewModel>>>>> =
-        interactor.colorOptions.map { colorOptions ->
-            colorOptions.map { colorOptionEntry ->
-                colorOptionEntry.first to
-                    colorOptionEntry.second.mapIndexed { index, colorOption ->
-                        colorOption as ColorOptionImpl
-                        val isSelectedFlow: StateFlow<Boolean> =
-                            combine(overridingColorOption, selectedColorOption) {
-                                    overriding,
-                                    selected ->
-                                    overriding?.isEquivalent(colorOption)
-                                        ?: selected?.isEquivalent(colorOption)
-                                        ?: false
-                                }
-                                .stateIn(viewModelScope)
-                        val key =
-                            "${colorOption.type}::${colorOption.style}::${colorOption.serializedPackages}"
-                        OptionItemViewModel2<ColorOptionIconViewModel>(
-                            key = MutableStateFlow(key) as StateFlow<String>,
-                            payload = ColorOptionIconViewModel.fromColorOption(colorOption),
-                            text =
-                                Text.Loaded(colorOption.getContentDescription(context).toString()),
-                            isTextUserVisible = false,
-                            isSelected = isSelectedFlow,
-                            onClicked =
-                                isSelectedFlow.map { isSelected ->
-                                    if (isSelected) {
-                                        null
-                                    } else {
-                                        {
-                                            viewModelScope.launch {
-                                                _overridingColorOption.value = colorOption
-                                                _overridingColorOptionIndex.value = index
-                                            }
-                                        }
-                                    }
-                                },
-                        )
-                    }
-            }
-        }
+    /** Opens the editor on a new color that starts from the previewed one, or else the first */
+    fun startNewColor() {
+        val swatches =
+            listOfNotNull(previewingSwatch.value) + colorSections.value.flatMap { it.swatches }
+        swatches.firstNotNullOfOrNull { it.details }?.let(editor::startNew)
+    }
 
     /**
      * This function suspends until onApplyComplete is called to accommodate for configuration
@@ -417,20 +269,10 @@ constructor(
     }
 
     fun resetPreview() {
-        _overridingColorOption.value = null
-        _overridingStyle.value = null
-        _tempOverridingStyle.value = null
+        overridingSwatchKey.value = null
+        editor.close()
+        resetStyleOptionSelection()
     }
-
-    /** The list of all available color options for the selected Color Type. */
-    val colorOptions: Flow<List<OptionItemViewModel2<ColorOptionIconViewModel>>> =
-        combine(allColorOptions, selectedColorTypeTabId) {
-            allColorOptions:
-                List<Pair<ColorType, List<OptionItemViewModel2<ColorOptionIconViewModel>>>>,
-            selectedColorTypeIdOrNull ->
-            val selectedColorTypeId = selectedColorTypeIdOrNull ?: ColorType.WALLPAPER_COLOR
-            allColorOptions.find { it.first == selectedColorTypeId }?.second ?: emptyList()
-        }
 
     @ViewModelScoped
     @AssistedFactory
@@ -441,6 +283,5 @@ constructor(
     companion object {
         const val TAG = "ColorPickerViewModel"
         const val COLOR_UPDATE_TIMEOUT_MILLIS = 3000L
-        const val HUE_INIT_VALUE = 180f
     }
 }

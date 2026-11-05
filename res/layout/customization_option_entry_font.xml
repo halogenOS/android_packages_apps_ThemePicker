@@ -58,11 +58,14 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <ImageView
-            android:id="@+id/option_entry_icon"
+        <TextView
+            android:id="@+id/option_entry_font_sample"
             android:importantForAccessibility="no"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:src="@drawable/ic_font" />
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="@string/font_sample"
+            android:textSize="26sp" />
     </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

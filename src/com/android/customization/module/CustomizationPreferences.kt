@@ -30,14 +30,9 @@ interface CustomizationPreferences : WallpaperPreferences {
 
     fun setThemedIconEnabled(enabled: Boolean)
 
-    fun getFreeformColorHue(): Float?
-
-    fun setFreeformColorHue(hue: Float)
-
     companion object {
         const val KEY_CUSTOM_THEME = "themepicker_custom_theme"
         const val KEY_VISITED_PREFIX = "themepicker_visited_"
         const val KEY_THEMED_ICON_ENABLED = "themepicker_themed_icon_enabled"
-        const val KEY_FREEFORM_COLOR_HUE = "themepicker_freeform_color_option"
     }
 }

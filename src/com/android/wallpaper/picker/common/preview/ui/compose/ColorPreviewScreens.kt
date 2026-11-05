@@ -45,25 +45,17 @@ import com.android.customization.picker.color.ui.compose.ColorPreviewTheme
 import com.android.customization.picker.color.ui.viewmodel.ColorPickerViewModel
 import com.android.customization.picker.mode.ui.viewmodel.DarkModeViewModel
 import com.android.systemui.monet.ColorScheme
-import com.android.wallpaper.customization.ui.viewmodel.ThemePickerCustomizationOptionsViewModel
 import com.android.wallpaper.picker.common.preview.ui.viewmodel.WorkspacePreviewScreen
 import com.android.wallpaper.util.DisplayUtils
 
-/**
- * Displays the corresponding workspace screen based on the preview screen flow and enables UI color
- * preview, specifically used in the color picker to display alternating previews.
- */
+/** Displays [previewScreen] in the colors, style and dark theme being previewed. */
 @Composable
 fun ColorPreviewScreens(
-    optionsViewModel: ThemePickerCustomizationOptionsViewModel,
+    previewScreen: WorkspacePreviewScreen,
     colorPickerViewModel: ColorPickerViewModel,
     darkModeViewModel: DarkModeViewModel,
     displayUtils: DisplayUtils,
 ) {
-    val previewScreen by
-        optionsViewModel.workspacePreviewScreen.collectAsStateWithLifecycle(
-            initialValue = WorkspacePreviewScreen.LAUNCHER
-        )
     val previewingColorOption: ColorOption? by
         colorPickerViewModel.tempPreviewingColorOption.collectAsStateWithLifecycle(
             initialValue = null

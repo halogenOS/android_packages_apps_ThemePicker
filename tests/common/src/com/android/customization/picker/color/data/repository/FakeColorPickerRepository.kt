@@ -23,7 +23,12 @@ import com.android.customization.model.color.ColorOption
 import com.android.customization.model.color.ColorOptionImpl
 import com.android.customization.model.color.ColorProviderUtil
 import com.android.customization.model.color.ColorUtils.toColorString
+import com.android.customization.picker.color.shared.model.ColorStyle
 import com.android.customization.picker.color.shared.model.ColorType
+import com.android.customization.picker.color.shared.model.SavedColor
+import com.android.customization.picker.color.shared.model.SavedColorId
+import com.android.customization.picker.color.shared.model.SavedColorOption
+import com.android.customization.picker.color.shared.model.SeedColor
 import com.android.wallpaper.config.BaseFlags
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -43,9 +48,6 @@ class FakeColorPickerRepository @Inject constructor(private val baseFlags: BaseF
 
     private val _selectedStyle = MutableStateFlow<Int?>(null)
     override val selectedStyle = _selectedStyle.asStateFlow()
-
-    private val _freeformColorHue = MutableStateFlow<Float?>(null)
-    override val freeformColorHue = _freeformColorHue.asStateFlow()
 
     private val _colorOptions =
         MutableStateFlow(
@@ -238,7 +240,31 @@ class FakeColorPickerRepository @Inject constructor(private val baseFlags: BaseF
         return applySuccess
     }
 
-    override fun saveFreeformColor(hue: Float) {
-        _freeformColorHue.value = hue
+    private val _savedColors = MutableStateFlow<List<SavedColorOption>>(emptyList())
+    override val savedColors = _savedColors.asStateFlow()
+
+    override suspend fun saveColor(color: SavedColor): Result<Unit> {
+        val option = buildPreviewOption(name = color.name, seed = color.seed, style = color.style)
+        _savedColors.value =
+            (_savedColors.value.filterNot { it.color.id == color.id } +
+                    SavedColorOption(color, option))
+                .sortedBy { it.color.addedAt }
+        return Result.success(Unit)
     }
+
+    override suspend fun deleteColor(id: SavedColorId): Result<Unit> {
+        _savedColors.value = _savedColors.value.filterNot { it.color.id == id }
+        return Result.success(Unit)
+    }
+
+    override fun buildPreviewOption(name: String, seed: SeedColor, style: ColorStyle): ColorOption =
+        ColorProviderUtil.buildSeedOption(
+            title = name,
+            seedColor = seed.argb,
+            style = style.themeStyle,
+            type = ColorType.SAVED_COLOR,
+            index = -1,
+            isUsingThemeService = false,
+            isColorPickerUpdateEnabled = baseFlags.isColorPickerUpdateEnabled(),
+        )
 }

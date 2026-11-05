@@ -18,7 +18,7 @@ package com.android.wallpaper.customization.ui.util
 
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.APP_ICONS
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerLockCustomizationOption.SHORTCUTS
-import com.android.wallpaper.model.Screen
+import com.android.wallpaper.model.PickerPage
 import com.android.wallpaper.picker.customization.ui.util.CustomizationOptionUtil
 import com.android.wallpaper.picker.customization.ui.util.CustomizationOptionUtil.CustomizationOption
 import com.android.wallpaper.picker.customization.ui.util.DefaultCustomizationOptionUtil
@@ -41,11 +41,16 @@ constructor(private val defaultCustomizationOptionUtil: DefaultCustomizationOpti
     enum class ThemePickerHomeCustomizationOption : CustomizationOption {
         SCREEN_SAVER,
         PACK_THEME,
-        COLORS,
-        COLOR_CONTRAST,
         APP_ICONS,
         GRID,
+    }
+
+    /** Options of the style page: colors, font and dark theme of the system */
+    enum class ThemePickerStyleCustomizationOption : CustomizationOption {
+        COLORS,
         FONT,
+        DARK_THEME,
+        COLOR_CONTRAST,
     }
 
     override fun getCustomizationOptionFromDestination(destination: String): CustomizationOption? {
@@ -57,13 +62,16 @@ constructor(private val defaultCustomizationOptionUtil: DefaultCustomizationOpti
             }
     }
 
-    override fun getScreenFromOption(option: CustomizationOption): Screen? {
+    override fun getPageFromOption(option: CustomizationOption): PickerPage? {
         return when (option) {
-            is ThemePickerLockCustomizationOption -> Screen.LOCK_SCREEN
-            is ThemePickerHomeCustomizationOption -> Screen.HOME_SCREEN
+            is ThemePickerLockCustomizationOption -> PickerPage.LOCK_SCREEN
+            is ThemePickerHomeCustomizationOption -> PickerPage.HOME_SCREEN
+            is ThemePickerStyleCustomizationOption -> PickerPage.STYLE
             else -> null
         }
     }
+
+    override val pages: Set<PickerPage> = PickerPage.entries.toSet()
 
     companion object {
         const val DESTINATION_QUICK_AFFORDANCES = "quick_affordances"

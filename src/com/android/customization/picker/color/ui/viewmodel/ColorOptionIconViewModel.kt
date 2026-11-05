@@ -18,7 +18,7 @@
 package com.android.customization.picker.color.ui.viewmodel
 
 import android.annotation.ColorInt
-import com.android.customization.model.color.ColorOptionImpl
+import com.android.customization.model.color.ColorOption
 
 data class ColorOptionIconViewModel(
     @ColorInt val lightThemeColor0: Int,
@@ -31,7 +31,7 @@ data class ColorOptionIconViewModel(
     @ColorInt val darkThemeColor3: Int,
 ) {
     companion object {
-        fun fromColorOption(colorOption: ColorOptionImpl): ColorOptionIconViewModel {
+        fun fromColorOption(colorOption: ColorOption): ColorOptionIconViewModel {
             val lightThemeColors = colorOption.previewInfo.resolveColors(/* darkTheme= */ false)
             val darkThemeColors = colorOption.previewInfo.resolveColors(/* darkTheme= */ true)
             return ColorOptionIconViewModel(
@@ -47,3 +47,11 @@ data class ColorOptionIconViewModel(
         }
     }
 }
+
+/** The four quadrant colors of the icon in the dark or the light theme. */
+fun ColorOptionIconViewModel.colors(isDarkMode: Boolean): List<Int> =
+    if (isDarkMode) {
+        listOf(darkThemeColor0, darkThemeColor1, darkThemeColor2, darkThemeColor3)
+    } else {
+        listOf(lightThemeColor0, lightThemeColor1, lightThemeColor2, lightThemeColor3)
+    }

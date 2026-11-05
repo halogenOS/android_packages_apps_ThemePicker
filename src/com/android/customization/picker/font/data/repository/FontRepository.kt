@@ -21,6 +21,8 @@ import android.graphics.fonts.FontManager
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import com.android.customization.picker.font.shared.model.FontOrigin
+import com.android.customization.picker.font.shared.model.InstalledFontFamily
 import com.android.wallpaper.picker.di.modules.BackgroundDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.ByteArrayInputStream
@@ -33,9 +35,11 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 
 /**
@@ -66,8 +70,24 @@ constructor(
     /** The build-time default font family (e.g. "adwaita-sans"), or `null` if unknown. */
     val defaultFamily: StateFlow<String?> = _defaultFamily.asStateFlow()
 
-    /** Maps font family ID to human-readable display name (e.g. "lato" → "Lato"). */
-    val displayNames: StateFlow<Map<String, String>> = MutableStateFlow(emptyMap())
+    // Maps font family ID to human-readable display name (e.g. "lato" → "Lato"). The framework
+    // returns only the families shipped in the system image.
+    private val displayNames = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    /** The installed families, each with its display name and origin. */
+    val families: Flow<List<InstalledFontFamily>> =
+        combine(installedFamilies, displayNames) { families, names ->
+            families.map { family ->
+                val shippedName = names[family]
+                InstalledFontFamily(
+                    name = family,
+                    displayName = shippedName ?: family,
+                    origin =
+                        if (shippedName != null) FontOrigin.INCLUDED
+                        else FontOrigin.INSTALLED_BY_USER,
+                )
+            }
+        }
 
     suspend fun refresh() =
         withContext(bgDispatcher) {
@@ -75,9 +95,8 @@ constructor(
             val families = runCatching { manager.customFontFamilyNames }.getOrDefault(emptyList())
             _installedFamilies.value = families
 
-            val displayNames = runCatching { manager.customFontFamilyDisplayNames }
-                .getOrDefault(emptyMap())
-            (this@FontRepository.displayNames as MutableStateFlow).value = displayNames
+            displayNames.value =
+                runCatching { manager.customFontFamilyDisplayNames }.getOrDefault(emptyMap())
 
             val active = runCatching { manager.activeCustomFontFamily }.getOrNull()
             _activeFamily.value = active?.takeIf { families.contains(it) }

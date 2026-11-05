@@ -22,9 +22,8 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.lifecycle.LifecycleOwner
 import com.android.customization.picker.clock.ui.view.ClockViewFactory
-import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.customization.ui.viewmodel.ThemePickerCustomizationOptionsViewModel
-import com.android.wallpaper.model.Screen
+import com.android.wallpaper.model.PickerPage
 import com.android.wallpaper.model.wallpaper.DeviceDisplayType
 import com.android.wallpaper.picker.common.preview.ui.compose.ColorPreviewScreens
 import com.android.wallpaper.picker.customization.ui.viewmodel.ColorUpdateViewModel
@@ -39,7 +38,6 @@ class ThemePickerWorkspaceBinder
 constructor(
     private val defaultWorkspaceBinder: DefaultWorkspaceBinder,
     private val displayUtils: DisplayUtils,
-    private val baseFlags: BaseFlags,
 ) : WorkspaceBinder {
 
     override fun bind(
@@ -47,26 +45,28 @@ constructor(
         alternativeWorkspaceView: ComposeView,
         viewModel: CustomizationPickerViewModel2,
         colorUpdateViewModel: ColorUpdateViewModel,
-        screen: Screen,
+        page: PickerPage,
         deviceDisplayType: DeviceDisplayType,
         lifecycleOwner: LifecycleOwner,
         clockViewFactory: ClockViewFactory,
     ) {
-        // Bind workspace surface
-        defaultWorkspaceBinder.bind(
-            surfaceView = surfaceView,
-            alternativeWorkspaceView = alternativeWorkspaceView,
-            viewModel = viewModel,
-            colorUpdateViewModel = colorUpdateViewModel,
-            screen = screen,
-            deviceDisplayType = deviceDisplayType,
-            lifecycleOwner = lifecycleOwner,
-            clockViewFactory = clockViewFactory,
-        )
+        val optionsViewModel =
+            viewModel.customizationOptionsViewModel as ThemePickerCustomizationOptionsViewModel
+        val previewScreen = optionsViewModel.workspacePreviewScreen(page)
+        if (previewScreen == null) {
+            defaultWorkspaceBinder.bind(
+                surfaceView = surfaceView,
+                alternativeWorkspaceView = alternativeWorkspaceView,
+                viewModel = viewModel,
+                colorUpdateViewModel = colorUpdateViewModel,
+                page = page,
+                deviceDisplayType = deviceDisplayType,
+                lifecycleOwner = lifecycleOwner,
+                clockViewFactory = clockViewFactory,
+            )
+        }
         // Bind compose view
-        if (baseFlags.isColorPickerUpdateEnabled() && screen == Screen.HOME_SCREEN) {
-            val optionsViewModel =
-                viewModel.customizationOptionsViewModel as ThemePickerCustomizationOptionsViewModel
+        previewScreen?.let { screen ->
             alternativeWorkspaceView.apply {
                 // Make sure Composable lifecycle aligns with fragment lifecycle
                 setViewCompositionStrategy(
@@ -74,7 +74,7 @@ constructor(
                 )
                 setContent {
                     ColorPreviewScreens(
-                        optionsViewModel = optionsViewModel,
+                        previewScreen = screen,
                         colorPickerViewModel = optionsViewModel.colorPickerViewModel2,
                         darkModeViewModel = optionsViewModel.darkModeViewModel,
                         displayUtils = displayUtils,

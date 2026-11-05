@@ -29,9 +29,6 @@ import com.android.customization.picker.mode.shared.util.DarkModeLifecycleUtil
 import com.android.themepicker.R
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.APP_ICONS
-import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.COLORS
-import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.COLOR_CONTRAST
-import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.FONT
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.GRID
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.PACK_THEME
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption.SCREEN_SAVER
@@ -39,10 +36,12 @@ import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptio
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerLockCustomizationOption.LOCK_SCREEN_NOTIFICATIONS
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerLockCustomizationOption.MORE_LOCK_SCREEN_SETTINGS
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerLockCustomizationOption.SHORTCUTS
+import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerStyleCustomizationOption.COLORS
+import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerStyleCustomizationOption.COLOR_CONTRAST
+import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerStyleCustomizationOption.DARK_THEME
+import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerStyleCustomizationOption.FONT
 import com.android.wallpaper.customization.ui.viewmodel.ThemePickerCustomizationOptionsData
-import com.android.wallpaper.model.Screen
-import com.android.wallpaper.model.Screen.HOME_SCREEN
-import com.android.wallpaper.model.Screen.LOCK_SCREEN
+import com.android.wallpaper.model.PickerPage
 import com.android.wallpaper.picker.customization.ui.util.CustomizationOptionUtil
 import com.android.wallpaper.picker.customization.ui.util.CustomizationOptionViewUtil
 import com.android.wallpaper.picker.customization.ui.util.DefaultCustomizationOptionViewUtil
@@ -64,7 +63,7 @@ constructor(
 
     override fun getOptionEntries(
         customizationOptionsData: CustomizationOptionsData,
-        screen: Screen,
+        page: PickerPage,
         optionContainer: LinearLayout,
         layoutInflater: LayoutInflater,
     ): List<Pair<CustomizationOptionUtil.CustomizationOption, View>> {
@@ -80,12 +79,12 @@ constructor(
         val defaultOptionEntries =
             defaultCustomizationOptionUtil.getOptionEntries(
                 customizationOptionsData = customizationOptionsData,
-                screen = screen,
+                page = page,
                 optionContainer = optionContainer,
                 layoutInflater = layoutInflater,
             )
-        return when (screen) {
-            LOCK_SCREEN ->
+        return when (page) {
+            PickerPage.LOCK_SCREEN ->
                 buildList {
                     addAll(defaultOptionEntries)
                     if (BaseFlags.get(context).isPackThemeEnabled() && showPackEntry) {
@@ -133,7 +132,7 @@ constructor(
                             )
                     )
                 }
-            HOME_SCREEN ->
+            PickerPage.HOME_SCREEN ->
                 buildList {
                     addAll(defaultOptionEntries)
                     if (BaseFlags.get(context).shouldShowDesktopUi(optionContainer.context)) {
@@ -156,24 +155,6 @@ constructor(
                                 )
                         )
                     }
-                    if (customizationOptionsData.isColorCustomizationAvailable) {
-                        add(
-                            COLORS to
-                                layoutInflater.inflate(
-                                    R.layout.customization_option_entry_colors,
-                                    optionContainer,
-                                    false,
-                                )
-                        )
-                    }
-                    add(
-                        COLOR_CONTRAST to
-                            layoutInflater.inflate(
-                                R.layout.customization_option_entry_color_contrast,
-                                optionContainer,
-                                false,
-                            )
-                    )
                     if (
                         customizationOptionsData.isIconStyleAvailable ||
                             customizationOptionsData.isShapeAvailable
@@ -196,6 +177,20 @@ constructor(
                                 )
                         )
                     }
+                }
+            PickerPage.STYLE ->
+                buildList {
+                    addAll(defaultOptionEntries)
+                    if (customizationOptionsData.isColorCustomizationAvailable) {
+                        add(
+                            COLORS to
+                                layoutInflater.inflate(
+                                    R.layout.customization_option_entry_colors,
+                                    optionContainer,
+                                    false,
+                                )
+                        )
+                    }
                     if (customizationOptionsData.isFontCustomizationAvailable) {
                         add(
                             FONT to
@@ -206,6 +201,22 @@ constructor(
                                 )
                         )
                     }
+                    add(
+                        DARK_THEME to
+                            layoutInflater.inflate(
+                                R.layout.customization_option_entry_dark_theme,
+                                optionContainer,
+                                false,
+                            )
+                    )
+                    add(
+                        COLOR_CONTRAST to
+                            layoutInflater.inflate(
+                                R.layout.customization_option_entry_color_contrast,
+                                optionContainer,
+                                false,
+                            )
+                    )
                 }
         }
     }
@@ -223,8 +234,6 @@ constructor(
                 layoutInflater = layoutInflater,
             )
         val isComposeRefactorEnabled = BaseFlags.get(context).isComposeRefactorEnabled()
-        val isColorPickerUpdateEnabled = BaseFlags.get(context).isColorPickerUpdateEnabled()
-        val isColorPickerComposeEnabled = BaseFlags.get(context).isColorPickerComposeEnabled()
         val isDesktopUi: Boolean = BaseFlags.get(context).shouldShowDesktopUi(context)
         val isKeyguardQuickAffordanceEnabled =
             BaseFlags.get(context).isKeyguardQuickAffordanceEnabled(bottomSheetContainer.context)
@@ -257,15 +266,7 @@ constructor(
                 )
             }
 
-            put(
-                COLORS,
-                if (isColorPickerUpdateEnabled && isColorPickerComposeEnabled) {
-                        ComposeView(context)
-                    } else {
-                        inflateFloatingSheet(COLORS, bottomSheetContainer, layoutInflater)
-                    }
-                    .also { bottomSheetContainer.addView(it) },
-            )
+            put(COLORS, ComposeView(context).also { bottomSheetContainer.addView(it) })
             put(APP_ICONS, inflateFloatingSheet(APP_ICONS, bottomSheetContainer, layoutInflater))
             if (customizationOptionsData.isGridCustomizationAvailable) {
                 put(
@@ -276,12 +277,7 @@ constructor(
                 )
             }
             if (customizationOptionsData.isFontCustomizationAvailable) {
-                put(
-                    FONT,
-                    inflateFloatingSheet(FONT, bottomSheetContainer, layoutInflater).also {
-                        bottomSheetContainer.addView(it)
-                    },
-                )
+                put(FONT, ComposeView(context).also { bottomSheetContainer.addView(it) })
             }
         }
     }
@@ -303,10 +299,8 @@ constructor(
         when (option) {
             CLOCK -> R.layout.floating_sheet_clock
             SHORTCUTS -> R.layout.floating_sheet_shortcut
-            COLORS -> R.layout.floating_sheet_colors
             APP_ICONS -> R.layout.floating_sheet_app_icon
             GRID -> R.layout.floating_sheet_grid
-            FONT -> R.layout.floating_sheet_font
             else ->
                 throw IllegalStateException(
                     "Customization option $option does not have a bottom sheet view"

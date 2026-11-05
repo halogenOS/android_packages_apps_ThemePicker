@@ -16,6 +16,7 @@
 
 package com.android.customization.picker.mode.ui.viewmodel
 
+import android.util.Log
 import com.android.customization.module.logging.ThemesUserEventLogger
 import com.android.customization.picker.mode.domain.interactor.DarkModeInteractor
 import com.android.wallpaper.picker.customization.ui.viewmodel.ColorUpdateViewModel
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 
@@ -38,7 +40,8 @@ constructor(
     private val interactor: DarkModeInteractor,
     private val logger: ThemesUserEventLogger,
 ) {
-    private val isDarkMode = interactor.isDarkMode
+    /** Whether the dark theme is applied to the system */
+    val isDarkMode = interactor.isDarkMode
     val isEnabled = interactor.isEnabled
 
     private val _overridingIsDarkMode = MutableStateFlow<Boolean?>(null)
@@ -63,26 +66,49 @@ constructor(
         combine(overridingIsDarkMode, isDarkMode, isEnabled) { override, current, isEnabled ->
             if (override != null && override != current && isEnabled) {
                 {
-                    coroutineScope {
-                        launch { interactor.setIsDarkMode(override) }
-                        // Dark mode change also invokes a color update. Suspend until both dark
-                        // mode and color are updated.
-                        combine(
-                                // Omit the first value which is emitted on subscribe.
-                                isDarkMode.drop(1).take(1),
-                                colorUpdateViewModel.systemColorsUpdatedNoReplay.take(1),
-                                ::Pair,
-                            )
-                            .collect { (_, _) ->
-                                return@collect
-                            }
-                        logger.logDarkThemeApplied(override)
-                    }
+                    // A failure is logged, and the preview remains, so Apply can be tried again.
+                    applyAndLog(override)
                 }
             } else null
         }
 
     fun resetPreview() {
         _overridingIsDarkMode.value = null
+    }
+
+    /**
+     * Applies the dark theme right away, for the switch on the main screen of the picker. Returns
+     * whether the system applied it.
+     */
+    suspend fun applyDarkMode(isActive: Boolean): Boolean =
+        isEnabled.first() && applyAndLog(isActive)
+
+    private suspend fun applyAndLog(isActive: Boolean): Boolean = coroutineScope {
+        // Dark mode change also invokes a color update. Suspend until both dark mode and color are
+        // updated.
+        val waitForUpdate = launch {
+            combine(
+                    // Omit the first value which is emitted on subscribe.
+                    isDarkMode.drop(1).take(1),
+                    colorUpdateViewModel.systemColorsUpdatedNoReplay.take(1),
+                    ::Pair,
+                )
+                .collect { (_, _) ->
+                    return@collect
+                }
+        }
+        val isApplied = interactor.setIsDarkMode(isActive)
+        if (isApplied) {
+            waitForUpdate.join()
+            logger.logDarkThemeApplied(isActive)
+        } else {
+            waitForUpdate.cancel()
+            Log.w(TAG, "The system did not apply the dark theme (requested: $isActive)")
+        }
+        isApplied
+    }
+
+    private companion object {
+        const val TAG = "DarkModeViewModel"
     }
 }

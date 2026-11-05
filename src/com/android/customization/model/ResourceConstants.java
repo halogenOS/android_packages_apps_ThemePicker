@@ -94,6 +94,8 @@ public interface ResourceConstants {
      * Color bundle strings used to reference system resources.
      */
     String COLOR_BUNDLES_ARRAY_NAME = "color_bundles";
+    /** List of the colors made for the product, shown in a separate section. */
+    String BRAND_COLOR_BUNDLES_ARRAY_NAME = "brand_color_bundles";
     String COLOR_BUNDLE_NAME_PREFIX = "bundle_name_";
     String COLOR_BUNDLE_MAIN_COLOR_PREFIX = "color_secondary_";
     String COLOR_BUNDLE_STYLE_PREFIX = "color_style_";

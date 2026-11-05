@@ -32,10 +32,9 @@ import kotlinx.coroutines.flow.asStateFlow
 @Singleton
 class FontInteractor @Inject constructor(private val repository: FontRepository) {
 
-    val installedFamilies = repository.installedFamilies
+    val families = repository.families
     val activeFamily = repository.activeFamily
     val defaultFamily = repository.defaultFamily
-    val displayNames = repository.displayNames
 
     private val _pendingSelection = MutableStateFlow<Selection>(Selection.Unset)
     val pendingSelection: StateFlow<Selection> = _pendingSelection.asStateFlow()

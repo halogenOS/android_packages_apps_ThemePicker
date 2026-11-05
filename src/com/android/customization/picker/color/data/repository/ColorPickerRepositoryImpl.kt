@@ -37,14 +37,16 @@ import com.android.customization.model.color.ColorOption
 import com.android.customization.model.color.ColorOptionImpl
 import com.android.customization.model.color.ColorProvider
 import com.android.customization.model.color.ColorProviderUtil
-import com.android.customization.model.color.ColorProviderUtil.hueToColorOption
-import com.android.customization.module.CustomizationPreferences
+import com.android.customization.picker.color.shared.model.ColorStyle
 import com.android.customization.picker.color.shared.model.ColorType
+import com.android.customization.picker.color.shared.model.SavedColor
+import com.android.customization.picker.color.shared.model.SavedColorId
+import com.android.customization.picker.color.shared.model.SavedColorOption
+import com.android.customization.picker.color.shared.model.SeedColor
 import com.android.systemui.monet.ColorScheme
 import com.android.themepicker.R
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.model.Screen
-import com.android.wallpaper.module.WallpaperPreferences
 import com.android.wallpaper.picker.customization.data.content.WallpaperClient
 import com.android.wallpaper.picker.di.modules.BackgroundDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -55,9 +57,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -75,9 +75,9 @@ constructor(
     @BackgroundDispatcher backgroundDispatcher: CoroutineDispatcher,
     private val colorManager: ColorCustomizationManager,
     private val themeManager: ThemeManager?,
-    private val wallpaperPreferences: WallpaperPreferences,
     client: WallpaperClient,
     private val baseFlags: BaseFlags,
+    private val savedColorStore: SavedColorStore,
 ) : ColorPickerRepository {
 
     // ThemeManager is only non-null when theme service flag is enabled
@@ -122,7 +122,7 @@ constructor(
             .filter { (screen, _) -> screen == Screen.LOCK_SCREEN }
             .map { (_, colors) -> colors }
 
-    private val _colorOptions: Flow<List<Pair<ColorType, List<ColorOption>>>> =
+    override val colorOptions: Flow<List<Pair<ColorType, List<ColorOption>>>> =
         if (shouldUseThemeService) {
             homeWallpaperColors
                 .map { homeColors ->
@@ -131,12 +131,13 @@ constructor(
                             option ->
                             when (option.source) {
                                 ColorProviderUtil.COLOR_SOURCE_HOME -> ColorType.WALLPAPER_COLOR
-                                else -> ColorType.PRESET_COLOR
+                                else -> option.type
                             }
                         }
                     listOf(
                         ColorType.WALLPAPER_COLOR to
                             (optionMap[ColorType.WALLPAPER_COLOR] ?: emptyList()),
+                        ColorType.BRAND_COLOR to (optionMap[ColorType.BRAND_COLOR] ?: emptyList()),
                         ColorType.PRESET_COLOR to (optionMap[ColorType.PRESET_COLOR] ?: emptyList()),
                     )
                 }
@@ -153,12 +154,15 @@ constructor(
                                 override fun onOptionsLoaded(options: MutableList<ColorOption>?) {
                                     val wallpaperColorOptions: MutableList<ColorOption> =
                                         mutableListOf()
+                                    val brandColorOptions: MutableList<ColorOption> =
+                                        mutableListOf()
                                     val presetColorOptions: MutableList<ColorOption> =
                                         mutableListOf()
                                     options?.forEach { option ->
-                                        when (val colorType = (option as ColorOptionImpl).type) {
+                                        when (val colorType = option.type) {
                                             ColorType.WALLPAPER_COLOR ->
                                                 wallpaperColorOptions.add(option)
+                                            ColorType.BRAND_COLOR -> brandColorOptions.add(option)
                                             ColorType.PRESET_COLOR -> presetColorOptions.add(option)
                                             else ->
                                                 Log.e(
@@ -171,6 +175,7 @@ constructor(
                                         Result.success(
                                             listOf(
                                                 ColorType.WALLPAPER_COLOR to wallpaperColorOptions,
+                                                ColorType.BRAND_COLOR to brandColorOptions,
                                                 ColorType.PRESET_COLOR to presetColorOptions,
                                             )
                                         )
@@ -193,25 +198,47 @@ constructor(
                 .shareIn(scope = scope, started = SharingStarted.WhileSubscribed(), replay = 1)
         }
 
-    private val _freeformColorHue =
-        MutableStateFlow((wallpaperPreferences as CustomizationPreferences).getFreeformColorHue())
-    override val freeformColorHue = _freeformColorHue.asStateFlow()
-
-    override val colorOptions: Flow<List<Pair<ColorType, List<ColorOption>>>> =
-        if (baseFlags.isColorPickerComposeEnabled()) {
-            combine(_colorOptions, _freeformColorHue) { options, hue ->
-                hue?.let {
-                    options.toMutableList().apply {
-                        add(
-                            index = 0,
-                            element = ColorType.FREEFORM_COLOR to listOf(hueToColorOption(hue)),
-                        )
-                    }
-                } ?: options
+    override val savedColors: Flow<List<SavedColorOption>> =
+        savedColorStore.colors
+            .map { colors ->
+                colors.mapIndexed { index, color ->
+                    SavedColorOption(
+                        color = color,
+                        option =
+                            buildSavedColorOption(
+                                name = color.name,
+                                seed = color.seed,
+                                style = color.style,
+                                index = index + 1,
+                            ),
+                    )
+                }
             }
-        } else {
-            _colorOptions
-        }
+            .flowOn(backgroundDispatcher)
+            .shareIn(scope = scope, started = SharingStarted.WhileSubscribed(), replay = 1)
+
+    override suspend fun saveColor(color: SavedColor): Result<Unit> = savedColorStore.write(color)
+
+    override suspend fun deleteColor(id: SavedColorId): Result<Unit> = savedColorStore.delete(id)
+
+    override fun buildPreviewOption(name: String, seed: SeedColor, style: ColorStyle): ColorOption =
+        buildSavedColorOption(name = name, seed = seed, style = style, index = PREVIEW_OPTION_INDEX)
+
+    private fun buildSavedColorOption(
+        name: String,
+        seed: SeedColor,
+        style: ColorStyle,
+        index: Int,
+    ): ColorOption =
+        ColorProviderUtil.buildSeedOption(
+            title = name,
+            seedColor = seed.argb,
+            style = style.themeStyle,
+            type = ColorType.SAVED_COLOR,
+            index = index,
+            isUsingThemeService = shouldUseThemeService,
+            isColorPickerUpdateEnabled = baseFlags.isColorPickerUpdateEnabled(),
+        )
 
     private val settingsChanged =
         callbackFlow {
@@ -406,12 +433,9 @@ constructor(
         return apply(colorOptionForApply)
     }
 
-    override fun saveFreeformColor(hue: Float) {
-        (wallpaperPreferences as CustomizationPreferences).setFreeformColorHue(hue)
-        _freeformColorHue.value = hue
-    }
-
     companion object {
         private const val TAG = "ColorPickerRepositoryImpl"
+        // A draft is applied only once saved, so its option never reaches the index in settings.
+        private const val PREVIEW_OPTION_INDEX = -1
     }
 }

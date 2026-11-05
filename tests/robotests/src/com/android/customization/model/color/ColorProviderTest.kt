@@ -340,47 +340,6 @@ class ColorProviderTest {
     }
 
     @Test
-    @DisableFlags(FLAG_COLOR_PICKER_UPDATE_FLAG)
-    fun fetch_presetColors_updateFlagOff_insertsMonochromeWallpaperOption() = runTest {
-        val wallpaperColors = WallpaperColors(Color.valueOf(Color.RED), null, null)
-        val bundleNames = arrayOf("monochrome")
-        `when`(resourcesApkProvider.isAvailable).thenReturn(true)
-        `when`(resourcesApkProvider.getItemsFromStub(ResourceConstants.COLOR_BUNDLES_ARRAY_NAME))
-            .thenReturn(bundleNames)
-        `when`(
-                resourcesApkProvider.getItemStringFromStub(
-                    ResourceConstants.COLOR_BUNDLE_NAME_PREFIX,
-                    "monochrome",
-                )
-            )
-            .thenReturn("Monochrome")
-        `when`(
-                resourcesApkProvider.getItemColorFromStub(
-                    ResourceConstants.COLOR_BUNDLE_MAIN_COLOR_PREFIX,
-                    "monochrome",
-                )
-            )
-            .thenReturn(Color.BLACK)
-        `when`(
-                resourcesApkProvider.getItemStringFromStub(
-                    ResourceConstants.COLOR_BUNDLE_STYLE_PREFIX,
-                    "monochrome",
-                )
-            )
-            .thenReturn("MONOCHROMATIC")
-
-        colorProvider.fetch(listener, reload = true, homeWallpaperColors = wallpaperColors)
-
-        val wallpaperOptions =
-            optionsResult.await()?.filter {
-                (it as ColorOptionImpl).type == ColorType.WALLPAPER_COLOR
-            }
-        assertThat(wallpaperOptions).isNotNull()
-        assertThat(wallpaperOptions!!).hasSize(5) // 4 wallpaper + 1 monochrome
-        assertThat(wallpaperOptions[1].title).isEqualTo("Monochrome")
-    }
-
-    @Test
     @EnableFlags(FLAG_COLOR_PICKER_UPDATE_FLAG)
     fun fetch_presetColors_updateFlagOn_doesNotInsertMonochromeWallpaperOption() = runTest {
         val wallpaperColors = WallpaperColors(Color.valueOf(Color.RED), null, null)

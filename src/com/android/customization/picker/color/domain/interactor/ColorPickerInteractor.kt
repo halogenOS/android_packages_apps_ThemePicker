@@ -19,7 +19,11 @@ package com.android.customization.picker.color.domain.interactor
 import android.content.theming.ThemeStyle
 import com.android.customization.model.color.ColorOption
 import com.android.customization.picker.color.data.repository.ColorPickerRepository
+import com.android.customization.picker.color.shared.model.ColorStyle
 import com.android.customization.picker.color.shared.model.ColorType
+import com.android.customization.picker.color.shared.model.SavedColor
+import com.android.customization.picker.color.shared.model.SavedColorId
+import com.android.customization.picker.color.shared.model.SeedColor
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -36,12 +40,17 @@ class ColorPickerInteractor @Inject constructor(private val repository: ColorPic
 
     val selectedStyle = repository.selectedStyle
 
-    val freeformColorHue = repository.freeformColorHue
-
     suspend fun apply(colorOption: ColorOption): Boolean = repository.apply(colorOption)
 
     suspend fun apply(colorOption: ColorOption, @ThemeStyle.Type style: Int): Boolean =
         repository.apply(colorOption, style)
 
-    fun saveFreeformColor(hue: Float) = repository.saveFreeformColor(hue)
+    val savedColors = repository.savedColors
+
+    suspend fun saveColor(color: SavedColor): Result<Unit> = repository.saveColor(color)
+
+    suspend fun deleteColor(id: SavedColorId): Result<Unit> = repository.deleteColor(id)
+
+    fun buildPreviewOption(name: String, seed: SeedColor, style: ColorStyle): ColorOption =
+        repository.buildPreviewOption(name, seed, style)
 }

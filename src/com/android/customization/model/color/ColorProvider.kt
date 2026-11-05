@@ -22,13 +22,13 @@ import android.content.theming.ThemeStyle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.android.customization.model.CustomizationManager.OptionsFetchedListener
+import com.android.customization.model.ResourceConstants.BRAND_COLOR_BUNDLES_ARRAY_NAME
 import com.android.customization.model.ResourceConstants.COLOR_BUNDLES_ARRAY_NAME
 import com.android.customization.model.ResourceConstants.COLOR_BUNDLE_MAIN_COLOR_PREFIX
 import com.android.customization.model.ResourceConstants.COLOR_BUNDLE_NAME_PREFIX
 import com.android.customization.model.ResourceConstants.COLOR_BUNDLE_STYLE_PREFIX
 import com.android.customization.model.ResourcesApkProvider
 import com.android.customization.model.color.ColorProviderUtil.COLOR_SOURCE_HOME
-import com.android.customization.model.color.ColorProviderUtil.COLOR_SOURCE_PRESET
 import com.android.customization.picker.color.shared.model.ColorType
 import com.android.systemui.monet.ColorScheme
 import com.android.wallpaper.config.BaseFlags
@@ -49,8 +49,6 @@ open class ColorProvider(private val context: Context, stubPackageName: String) 
 
     private var loaderJob: Job? = null
     internal open val monetEnabled = ColorUtils.isMonetEnabled(context)
-
-    private var monochromeBundleName: String? = null
 
     private val scope =
         if (context is LifecycleOwner) {
@@ -210,14 +208,16 @@ open class ColorProvider(private val context: Context, stubPackageName: String) 
         withContext(Dispatchers.IO) {
             val bundles: MutableList<ColorOption> = ArrayList()
 
-            val bundleNames =
-                if (isAvailable()) resourcesApkProvider.getItemsFromStub(COLOR_BUNDLES_ARRAY_NAME)
-                else emptyArray()
+            val typedBundleNames: List<Pair<ColorType, String>> =
+                if (isAvailable()) {
+                    PRESET_ARRAYS.flatMap { (type, arrayName) ->
+                        resourcesApkProvider.getItemsFromStub(arrayName).map { type to it }
+                    }
+                } else {
+                    emptyList()
+                }
 
-            // keep track of whether monochrome is included in preset colors to determine
-            // inclusion in wallpaper colors
-            var hasMonochrome = false
-            for ((i, bundleName) in bundleNames.withIndex()) {
+            for ((type, bundleName) in typedBundleNames) {
                 val title =
                     resourcesApkProvider.getItemStringFromStub(COLOR_BUNDLE_NAME_PREFIX, bundleName)
                 val color =
@@ -243,32 +243,18 @@ open class ColorProvider(private val context: Context, stubPackageName: String) 
                         ThemeStyle.TONAL_SPOT
                     }
 
-                if (style == ThemeStyle.MONOCHROMATIC) {
-                    hasMonochrome = true
-                    monochromeBundleName = bundleName
-                }
                 bundles.add(
-                    if (isUsingThemeService) {
-                        ColorOptionImpl.buildSimplifiedSeedOption(
-                            title = title,
-                            source = COLOR_SOURCE_PRESET,
-                            seedColor = color,
-                            defaultStyle = style,
-                        )
-                    } else {
-                        ColorProviderUtil.buildPreset(
-                            title = title,
-                            color = color,
-                            // Color option index value starts from 1.
-                            index = i + 1,
-                            style = style,
-                            isColorPickerUpdateEnabled = isColorPickerUpdateEnabled,
-                        )
-                    }
+                    ColorProviderUtil.buildSeedOption(
+                        title = title,
+                        seedColor = color,
+                        style = style,
+                        type = type,
+                        // Color option index value starts from 1.
+                        index = bundles.size + 1,
+                        isUsingThemeService = isUsingThemeService,
+                        isColorPickerUpdateEnabled = isColorPickerUpdateEnabled,
+                    )
                 )
-            }
-            if (!hasMonochrome) {
-                monochromeBundleName = null
             }
 
             presetColorBundles = bundles
@@ -277,38 +263,19 @@ open class ColorProvider(private val context: Context, stubPackageName: String) 
 
     private fun buildFinalList(): List<ColorOption> {
         val presetColors = presetColorBundles ?: emptyList()
-        val wallpaperColors = wallpaperColorBundles?.toMutableList() ?: mutableListOf()
-        if (!isColorPickerUpdateEnabled) {
-            insertMonochrome(wallpaperColors)
-        }
+        val wallpaperColors = wallpaperColorBundles ?: emptyList()
         return wallpaperColors + presetColors
-    }
-
-    private fun insertMonochrome(colorList: MutableList<ColorOption>) {
-        // Insert monochrome in the second position if it is enabled and included in preset
-        // colors
-        monochromeBundleName?.let {
-            val title = resourcesApkProvider.getItemStringFromStub(COLOR_BUNDLE_NAME_PREFIX, it)
-            val color =
-                resourcesApkProvider.getItemColorFromStub(COLOR_BUNDLE_MAIN_COLOR_PREFIX, it)
-            if (colorList.isNotEmpty()) {
-                colorList.add(
-                    1,
-                    ColorProviderUtil.buildPreset(
-                        title = title,
-                        color = color,
-                        index = -1,
-                        style = ThemeStyle.MONOCHROMATIC,
-                        type = ColorType.WALLPAPER_COLOR,
-                        isColorPickerUpdateEnabled = isColorPickerUpdateEnabled,
-                    ),
-                )
-            }
-        }
     }
 
     companion object {
         private const val TAG = "ColorProvider"
         private const val MAX_SEED_COLORS = 4
+
+        /** Arrays of preset colors in the stub, in the order the sections are shown. */
+        private val PRESET_ARRAYS =
+            listOf(
+                ColorType.BRAND_COLOR to BRAND_COLOR_BUNDLES_ARRAY_NAME,
+                ColorType.PRESET_COLOR to COLOR_BUNDLES_ARRAY_NAME,
+            )
     }
 }

@@ -22,24 +22,64 @@
     <string name="rainbow_color_name_green">Green</string>
     <string name="rainbow_color_name_blue">Blue</string>
     <string name="rainbow_color_name_purple">Purple</string>
-    <string name="rainbow_color_name_magenta">Magenta</string>
     <string name="monochromatic_name">Monochromatic</string>
+    <string name="material_color_name_pink">Pink</string>
+    <string name="material_color_name_deep_purple">Deep Purple</string>
+    <string name="material_color_name_indigo">Indigo</string>
+    <string name="material_color_name_light_blue">Light Blue</string>
+    <string name="material_color_name_cyan">Cyan</string>
+    <string name="material_color_name_teal">Teal</string>
+    <string name="material_color_name_light_green">Light Green</string>
+    <string name="material_color_name_lime">Lime</string>
+    <string name="material_color_name_amber">Amber</string>
+    <string name="material_color_name_deep_orange">Deep Orange</string>
+    <string name="material_color_name_brown">Brown</string>
+    <string name="material_color_name_grey">Grey</string>
+    <string name="material_color_name_blue_grey">Blue Grey</string>
 
-    <string name="bundle_name_rainbow1" translatable="false">@string/rainbow_color_name_red</string>
-    <string name="bundle_name_rainbow2" translatable="false">@string/rainbow_color_name_orange</string>
-    <string name="bundle_name_rainbow3" translatable="false">@string/rainbow_color_name_yellow</string>
-    <string name="bundle_name_rainbow4" translatable="false">@string/rainbow_color_name_green</string>
-    <string name="bundle_name_rainbow5" translatable="false">@string/rainbow_color_name_blue</string>
-    <string name="bundle_name_rainbow6" translatable="false">@string/rainbow_color_name_purple</string>
-    <string name="bundle_name_rainbow7" translatable="false">@string/rainbow_color_name_magenta</string>
+    <string name="bundle_name_brand_blue" translatable="false">XOS Blue</string>
+    <string name="bundle_name_brand_material" translatable="false">XOS Material</string>
+    <string name="bundle_name_red" translatable="false">@string/rainbow_color_name_red</string>
+    <string name="bundle_name_pink" translatable="false">@string/material_color_name_pink</string>
+    <string name="bundle_name_purple" translatable="false">@string/rainbow_color_name_purple</string>
+    <string name="bundle_name_deep_purple" translatable="false">@string/material_color_name_deep_purple</string>
+    <string name="bundle_name_indigo" translatable="false">@string/material_color_name_indigo</string>
+    <string name="bundle_name_blue" translatable="false">@string/rainbow_color_name_blue</string>
+    <string name="bundle_name_light_blue" translatable="false">@string/material_color_name_light_blue</string>
+    <string name="bundle_name_cyan" translatable="false">@string/material_color_name_cyan</string>
+    <string name="bundle_name_teal" translatable="false">@string/material_color_name_teal</string>
+    <string name="bundle_name_green" translatable="false">@string/rainbow_color_name_green</string>
+    <string name="bundle_name_light_green" translatable="false">@string/material_color_name_light_green</string>
+    <string name="bundle_name_lime" translatable="false">@string/material_color_name_lime</string>
+    <string name="bundle_name_yellow" translatable="false">@string/rainbow_color_name_yellow</string>
+    <string name="bundle_name_amber" translatable="false">@string/material_color_name_amber</string>
+    <string name="bundle_name_orange" translatable="false">@string/rainbow_color_name_orange</string>
+    <string name="bundle_name_deep_orange" translatable="false">@string/material_color_name_deep_orange</string>
+    <string name="bundle_name_brown" translatable="false">@string/material_color_name_brown</string>
+    <string name="bundle_name_grey" translatable="false">@string/material_color_name_grey</string>
+    <string name="bundle_name_blue_grey" translatable="false">@string/material_color_name_blue_grey</string>
     <string name="bundle_name_monochromatic" translatable="false">@string/monochromatic_name</string>
 
-    <string name="color_style_rainbow1" translatable="false">RAINBOW</string>
-    <string name="color_style_rainbow2" translatable="false">RAINBOW</string>
-    <string name="color_style_rainbow3" translatable="false">RAINBOW</string>
-    <string name="color_style_rainbow4" translatable="false">RAINBOW</string>
-    <string name="color_style_rainbow5" translatable="false">RAINBOW</string>
-    <string name="color_style_rainbow6" translatable="false">RAINBOW</string>
-    <string name="color_style_rainbow7" translatable="false">RAINBOW</string>
+    <string name="color_style_brand_blue" translatable="false">VIBRANT</string>
+    <string name="color_style_brand_material" translatable="false">VIBRANT</string>
+    <string name="color_style_red" translatable="false">VIBRANT</string>
+    <string name="color_style_pink" translatable="false">VIBRANT</string>
+    <string name="color_style_purple" translatable="false">VIBRANT</string>
+    <string name="color_style_deep_purple" translatable="false">VIBRANT</string>
+    <string name="color_style_indigo" translatable="false">VIBRANT</string>
+    <string name="color_style_blue" translatable="false">VIBRANT</string>
+    <string name="color_style_light_blue" translatable="false">VIBRANT</string>
+    <string name="color_style_cyan" translatable="false">VIBRANT</string>
+    <string name="color_style_teal" translatable="false">VIBRANT</string>
+    <string name="color_style_green" translatable="false">VIBRANT</string>
+    <string name="color_style_light_green" translatable="false">VIBRANT</string>
+    <string name="color_style_lime" translatable="false">VIBRANT</string>
+    <string name="color_style_yellow" translatable="false">VIBRANT</string>
+    <string name="color_style_amber" translatable="false">VIBRANT</string>
+    <string name="color_style_orange" translatable="false">VIBRANT</string>
+    <string name="color_style_deep_orange" translatable="false">VIBRANT</string>
+    <string name="color_style_brown" translatable="false">VIBRANT</string>
+    <string name="color_style_grey" translatable="false">VIBRANT</string>
+    <string name="color_style_blue_grey" translatable="false">VIBRANT</string>
     <string name="color_style_monochromatic" translatable="false">MONOCHROMATIC</string>
 </resources>

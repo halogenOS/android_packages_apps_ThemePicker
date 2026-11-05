@@ -763,4 +763,49 @@
     <string name="font_picker_restart_dialog_positive">Restart now</string>
     <!-- Font picker: negative button on restart dialog. [CHAR LIMIT=20] -->
     <string name="font_picker_restart_dialog_negative">Restart later</string>
+
+    <!-- Colors sheet: name of a color made from the wallpaper, numbered in the order the wallpaper gives them. %1$d is the number. [CHAR LIMIT=15] -->
+    <string name="wallpaper_color_name">Wallpaper <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <!-- Colors sheet: style and seed of the previewed color, shown under its name. %1$s is the style, like Bright, %2$s the six hex digits of the seed, like 00B4E7. [CHAR LIMIT=40] -->
+    <string name="color_details"><xliff:g id="style" example="Bright">%1$s</xliff:g> · #<xliff:g id="seed" example="00B4E7">%2$s</xliff:g></string>
+    <!-- Colors sheet and Colors entry: name of the applied color when none of the colors in the sheet applies it. [CHAR LIMIT=20] -->
+    <string name="applied_color_name">Custom</string>
+    <!-- Colors sheet: title of the section of colors made for this product, shown above them. [CHAR LIMIT=30] -->
+    <string name="brand_color_section_title">XOS colors</string>
+    <!-- Colors sheet: title of the section of the Material Design colors, shown above them. [CHAR LIMIT=30] -->
+    <string name="preset_color_section_title">Material colors</string>
+    <!-- Colors sheet: label of the tile that opens the editor for a new color of the user, and title of that editor. [CHAR LIMIT=20] -->
+    <string name="new_color_title">New color</string>
+    <!-- Colors sheet: title of the editor for a color saved by the user, and description of the button that opens it. [CHAR LIMIT=20] -->
+    <string name="edit_color_title">Edit color</string>
+    <!-- Colors sheet: description of the button that opens the editor for a new color, filled in from the previewed one (used mainly for accessibility). [CHAR LIMIT=NONE] -->
+    <string name="new_color_from_this_description">New color based on this one</string>
+    <!-- Color editor: label of the field for the name of the color. [CHAR LIMIT=20] -->
+    <string name="color_name_label">Name</string>
+    <!-- Color editor: label of the field for the color as six hexadecimal digits. [CHAR LIMIT=20] -->
+    <string name="color_hex_label">Hex</string>
+    <!-- Color editor: sign shown before the six hex digits typed into the hex field. -->
+    <string name="color_hex_prefix" translatable="false">#</string>
+    <!-- Color editor: shown under the hex field while it has fewer than six digits. [CHAR LIMIT=40] -->
+    <string name="color_hex_incomplete">Enter 6 digits</string>
+    <!-- Color editor: description of the slider that picks the hue of the color (used mainly for accessibility). [CHAR LIMIT=NONE] -->
+    <string name="color_hue_label">Hue</string>
+    <!-- Color editor: description of the square that picks saturation and brightness of the color (used mainly for accessibility). [CHAR LIMIT=NONE] -->
+    <string name="color_saturation_value_label">Saturation and brightness</string>
+    <!-- Color editor: shown when the color could not be saved, the editor remains open. [CHAR LIMIT=NONE] -->
+    <string name="color_save_failed">Couldn\'t save the color. Try again.</string>
+    <!-- Color editor: shown when the color could not be deleted, the editor remains open. [CHAR LIMIT=NONE] -->
+    <string name="color_delete_failed">Couldn\'t delete the color. Try again.</string>
+    <!-- Color editor: button that deletes the color saved by the user. [CHAR LIMIT=20] -->
+    <string name="delete_color_label">Delete</string>
+
+    <!-- Style page: shown when the switch on the Dark theme entry could not change the dark theme. [CHAR LIMIT=NONE] -->
+    <string name="dark_theme_apply_failed">Couldn\'t change the dark theme. Try again.</string>
+
+    <!-- Font sheet: title of the section of fonts installed by the user, and the origin shown under the name of such a font. [CHAR LIMIT=30] -->
+    <string name="font_origin_installed_by_user">Installed by you</string>
+    <!-- Font sheet: title of the section of fonts that come with the system, and the origin shown under the name of such a font. [CHAR LIMIT=30] -->
+    <string name="font_origin_included">Included</string>
+    <!-- Font sheet and Font entry: sample text drawn in each font. -->
+    <string name="font_sample" translatable="false">Aa</string>
 </resources>

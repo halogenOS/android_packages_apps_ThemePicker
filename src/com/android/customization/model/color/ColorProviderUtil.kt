@@ -28,7 +28,6 @@ import com.android.customization.model.color.ColorUtils.toColorString
 import com.android.customization.picker.color.shared.model.ColorType
 import com.android.systemui.monet.ColorScheme
 import com.android.themepicker.R
-import com.google.android.material.color.utilities.Hct
 
 object ColorProviderUtil {
     private const val ALPHA_MASK = 0xFF
@@ -125,6 +124,38 @@ object ColorProviderUtil {
         builder.type = ColorType.WALLPAPER_COLOR
         return builder.build()
     }
+
+    /**
+     * Builds the option that applies [seedColor] in [style]. With the theme service it is a
+     * simplified seed option, otherwise a preset with the overlay packages of the seed.
+     */
+    fun buildSeedOption(
+        title: String,
+        @ColorInt seedColor: Int,
+        @ThemeStyle.Type style: Int,
+        type: ColorType,
+        index: Int,
+        isUsingThemeService: Boolean,
+        isColorPickerUpdateEnabled: Boolean,
+    ): ColorOptionImpl =
+        if (isUsingThemeService) {
+            ColorOptionImpl.buildSimplifiedSeedOption(
+                title = title,
+                source = COLOR_SOURCE_PRESET,
+                seedColor = seedColor,
+                defaultStyle = style,
+                type = type,
+            )
+        } else {
+            buildPreset(
+                title = title,
+                color = seedColor,
+                index = index,
+                style = style,
+                type = type,
+                isColorPickerUpdateEnabled = isColorPickerUpdateEnabled,
+            )
+        }
 
     /**
      * Builds a [ColorOptionImpl] for a preset color with a specified color and style Only use this
@@ -327,16 +358,5 @@ object ColorProviderUtil {
                 ThemeStyle.EXPRESSIVE,
             )
         }
-    }
-
-    fun hueToColorOption(hue: Float): ColorOption {
-        val hct = Hct.from(hue.toDouble(), 100.0, 80.0)
-        return ColorOptionImpl.buildSimplifiedSeedOption(
-            // TODO(b/441279631): string needed for accessibility
-            title = "",
-            source = COLOR_SOURCE_PRESET,
-            seedColor = hct.toInt(),
-            defaultStyle = ThemeStyle.TONAL_SPOT,
-        )
     }
 }

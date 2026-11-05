@@ -17,11 +17,29 @@
 <resources>
 <!--TODO(b/257218629)-->
     <color name="color_secondary_monochromatic">#FFFF00</color>
-    <color name="color_secondary_rainbow1">#FFB2B5</color>
-    <color name="color_secondary_rainbow2">#FFB868</color>
-    <color name="color_secondary_rainbow3">#E9C44A</color>
-    <color name="color_secondary_rainbow4">#BAF293</color>
-    <color name="color_secondary_rainbow5">#96CBFF</color>
-    <color name="color_secondary_rainbow6">#CBBFFF</color>
-    <color name="color_secondary_rainbow7">#F5ACFB</color>
+
+    <color name="color_secondary_brand_blue">#00B4E7</color>
+    <color name="color_secondary_brand_material">#1E88E5</color>
+
+    <!-- Shade 500 of the Material Design 1 palette, from
+         https://m1.material.io/style/color.html#color-color-palette (checked 2026-11-05) -->
+    <color name="color_secondary_red">#F44336</color>
+    <color name="color_secondary_pink">#E91E63</color>
+    <color name="color_secondary_purple">#9C27B0</color>
+    <color name="color_secondary_deep_purple">#673AB7</color>
+    <color name="color_secondary_indigo">#3F51B5</color>
+    <color name="color_secondary_blue">#2196F3</color>
+    <color name="color_secondary_light_blue">#03A9F4</color>
+    <color name="color_secondary_cyan">#00BCD4</color>
+    <color name="color_secondary_teal">#009688</color>
+    <color name="color_secondary_green">#4CAF50</color>
+    <color name="color_secondary_light_green">#8BC34A</color>
+    <color name="color_secondary_lime">#CDDC39</color>
+    <color name="color_secondary_yellow">#FFEB3B</color>
+    <color name="color_secondary_amber">#FFC107</color>
+    <color name="color_secondary_orange">#FF9800</color>
+    <color name="color_secondary_deep_orange">#FF5722</color>
+    <color name="color_secondary_brown">#795548</color>
+    <color name="color_secondary_grey">#9E9E9E</color>
+    <color name="color_secondary_blue_grey">#607D8B</color>
 </resources>

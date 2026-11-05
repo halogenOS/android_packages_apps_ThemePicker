@@ -20,8 +20,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.graphics.drawable.AdaptiveIconDrawable
+import android.net.Uri
 import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
@@ -38,16 +38,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.android.customization.model.color.ColorOptionImpl
 import com.android.customization.picker.clock.ui.binder.ClockFloatingSheetBinder
 import com.android.customization.picker.clock.ui.view.ClockConstraintLayoutHostView
 import com.android.customization.picker.clock.ui.view.ClockConstraintLayoutHostView.Companion.addClockViews
 import com.android.customization.picker.clock.ui.view.ClockViewFactory
 import com.android.customization.picker.color.ui.binder.ColorOptionIconBinder
-import com.android.customization.picker.color.ui.binder.ColorsFloatingSheetBinder
-import com.android.customization.picker.color.ui.compose.ColorFloatingSheet
+import com.android.customization.picker.color.ui.compose.ColorsSheet
 import com.android.customization.picker.color.ui.view.ColorOptionIconView
-import com.android.customization.picker.color.ui.viewmodel.ColorOptionIconViewModel
+import com.android.customization.picker.color.ui.viewmodel.toIconViewModel
 import com.android.customization.picker.grid.ui.binder.GridFloatingSheetBinder
 import com.android.customization.picker.icon.ui.binder.AppIconFloatingSheetBinder
 import com.android.customization.picker.icon.ui.binder.ShapeIconViewBinder
@@ -60,8 +58,10 @@ import com.android.themepicker.R
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerHomeCustomizationOption
 import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerLockCustomizationOption
+import com.android.wallpaper.customization.ui.util.ThemePickerCustomizationOptionUtil.ThemePickerStyleCustomizationOption
 import com.android.wallpaper.customization.ui.viewmodel.ThemePickerCustomizationOptionsData
 import com.android.wallpaper.customization.ui.viewmodel.ThemePickerCustomizationOptionsViewModel
+import com.android.wallpaper.model.PickerPage
 import com.android.wallpaper.picker.common.icon.ui.viewbinder.IconViewBinder
 import com.android.wallpaper.picker.common.text.ui.viewbinder.TextViewBinder
 import com.android.wallpaper.picker.customization.ui.binder.ColorUpdateBinder
@@ -75,6 +75,7 @@ import com.android.wallpaper.picker.customization.ui.viewmodel.CustomizationOpti
 import com.android.wallpaper.picker.customization.ui.viewmodel.CustomizationPickerViewModel2
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -86,6 +87,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 
@@ -99,8 +101,7 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
     override fun bind(
         customizationOptionsData: CustomizationOptionsData,
         view: View,
-        lockScreenCustomizationOptionEntries: List<Pair<CustomizationOption, View>>,
-        homeScreenCustomizationOptionEntries: List<Pair<CustomizationOption, View>>,
+        optionEntries: Map<PickerPage, List<Pair<CustomizationOption, View>>>,
         customizationOptionFloatingSheetViewMap: Map<CustomizationOption, View>?,
         viewModel: CustomizationPickerViewModel2,
         colorUpdateViewModel: ColorUpdateViewModel,
@@ -116,8 +117,7 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
         defaultCustomizationOptionsBinder.bind(
             customizationOptionsData,
             view,
-            lockScreenCustomizationOptionEntries,
-            homeScreenCustomizationOptionEntries,
+            optionEntries,
             customizationOptionFloatingSheetViewMap,
             viewModel,
             colorUpdateViewModel,
@@ -134,8 +134,6 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
         customizationOptionsData as ThemePickerCustomizationOptionsData
 
         val isComposeRefactorEnabled = BaseFlags.get(view.context).isComposeRefactorEnabled()
-        val isColorPickerUpdateEnabled = BaseFlags.get(view.context).isColorPickerUpdateEnabled()
-        val isColorPickerComposeEnabled = BaseFlags.get(view.context).isColorPickerComposeEnabled()
 
         val showPackEntry =
             Settings.Secure.getInt(
@@ -149,9 +147,11 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
 
         val isOnMainScreen = { optionsViewModel.selectedOption.value == null }
 
-        val allCustomizationOptionEntries =
-            lockScreenCustomizationOptionEntries + homeScreenCustomizationOptionEntries
-        allCustomizationOptionEntries.forEach { (_, view) ->
+        val lockScreenCustomizationOptionEntries = optionEntries.getValue(PickerPage.LOCK_SCREEN)
+        val homeScreenCustomizationOptionEntries = optionEntries.getValue(PickerPage.HOME_SCREEN)
+        val styleCustomizationOptionEntries = optionEntries.getValue(PickerPage.STYLE)
+
+        optionEntries.values.flatten().forEach { (_, view) ->
             ColorUpdateBinder.bind(
                 setColor = { color ->
                     DrawableCompat.setTint(DrawableCompat.wrap(view.background), color)
@@ -264,12 +264,14 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
 
         val optionColors: View? =
             if (customizationOptionsData.isColorCustomizationAvailable) {
-                homeScreenCustomizationOptionEntries
-                    .first { it.first == ThemePickerHomeCustomizationOption.COLORS }
+                styleCustomizationOptionEntries
+                    .first { it.first == ThemePickerStyleCustomizationOption.COLORS }
                     .second
             } else null
         val optionColorsIcon: ColorOptionIconView? =
             optionColors?.requireViewById(R.id.option_entry_icon)
+        val optionColorsDescription: TextView? =
+            optionColors?.requireViewById(R.id.option_entry_description)
 
         val optionAppIcons: View? =
             if (customizationOptionsData.isIconCustomizationAvailable) {
@@ -295,18 +297,31 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
 
         val optionFont: View? =
             if (customizationOptionsData.isFontCustomizationAvailable) {
-                homeScreenCustomizationOptionEntries
-                    .first { it.first == ThemePickerHomeCustomizationOption.FONT }
+                styleCustomizationOptionEntries
+                    .first { it.first == ThemePickerStyleCustomizationOption.FONT }
                     .second
             } else null
         val optionFontDescription: TextView? =
             optionFont?.requireViewById(R.id.option_entry_description)
-        val optionFontIcon: ImageView? = optionFont?.requireViewById(R.id.option_entry_icon)
+        val optionFontSample: TextView? = optionFont?.requireViewById(R.id.option_entry_font_sample)
+        optionFontSample?.let { sample ->
+            ColorUpdateBinder.bind(
+                setColor = { color -> sample.setTextColor(color) },
+                color = colorUpdateViewModel.colorOnSurface,
+                shouldAnimate = isOnMainScreen,
+                lifecycleOwner = lifecycleOwner,
+            )
+        }
 
         val optionColorContrast: View =
-            homeScreenCustomizationOptionEntries
-                .first { it.first == ThemePickerHomeCustomizationOption.COLOR_CONTRAST }
+            styleCustomizationOptionEntries
+                .first { it.first == ThemePickerStyleCustomizationOption.COLOR_CONTRAST }
                 .second
+        val optionDarkThemeSwitch: MaterialSwitch =
+            styleCustomizationOptionEntries
+                .first { it.first == ThemePickerStyleCustomizationOption.DARK_THEME }
+                .second
+                .requireViewById(R.id.option_entry_switch)
         optionColorContrast.setOnClickListener { navigateToColorContrastSettingsActivity.invoke() }
         val backgroundScope =
             CoroutineScope(Dispatchers.IO + Job() + CoroutineName(BACKGROUND_CONTEXT))
@@ -478,11 +493,37 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
                         }
                     }
                     launch {
-                        optionsViewModel.fontPickerViewModel.previewingFamilyDisplayName.collect { name ->
-                            val label =
-                                name
-                                    ?: view.context.getString(R.string.font_picker_stock_option)
-                            optionFontDescription?.text = label
+                        optionsViewModel.fontPickerViewModel.previewingFont
+                            .filterNotNull()
+                            .collect { font ->
+                                optionFontDescription?.let { TextViewBinder.bind(it, font.name) }
+                                optionFontSample?.typeface = font.createTypeface()
+                            }
+                    }
+                }
+
+                launch {
+                    optionsViewModel.darkModeViewModel.isEnabled.collect {
+                        optionDarkThemeSwitch.isEnabled = it
+                    }
+                }
+                launch {
+                    optionsViewModel.darkModeViewModel.isDarkMode.collect {
+                        optionDarkThemeSwitch.isChecked = it
+                    }
+                }
+                // A click listener, so a tap applies the dark theme and a state update does not.
+                optionDarkThemeSwitch.setOnClickListener {
+                    val isActive = optionDarkThemeSwitch.isChecked
+                    launch {
+                        if (!optionsViewModel.darkModeViewModel.applyDarkMode(isActive)) {
+                            optionDarkThemeSwitch.isChecked = !isActive
+                            Toast.makeText(
+                                    view.context,
+                                    R.string.dark_theme_apply_failed,
+                                    Toast.LENGTH_SHORT,
+                                )
+                                .show()
                         }
                     }
                 }
@@ -506,25 +547,24 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
                 if (customizationOptionsData.isColorCustomizationAvailable) {
                     launch {
                         var binding: ColorOptionIconBinder.Binding? = null
-                        optionsViewModel.colorPickerViewModel2.selectedColorOption.collect {
-                            colorOption ->
-                            (colorOption as? ColorOptionImpl)?.let {
-                                optionColorsIcon?.let {
+                        optionsViewModel.colorPickerViewModel2.previewingSwatch
+                            .filterNotNull()
+                            .collect { swatch ->
+                                optionColorsDescription?.let {
+                                    TextViewBinder.bind(it, swatch.name)
+                                }
+                                if (optionColorsIcon != null) {
                                     binding?.destroy()
                                     binding =
                                         ColorOptionIconBinder.bind(
                                             view = optionColorsIcon,
-                                            viewModel =
-                                                ColorOptionIconViewModel.fromColorOption(
-                                                    colorOption
-                                                ),
+                                            viewModel = swatch.fill.toIconViewModel(),
                                             colorUpdateViewModel = colorUpdateViewModel,
                                             shouldAnimateColor = isOnMainScreen,
                                             lifecycleOwner = lifecycleOwner,
                                         )
                                 }
                             }
-                        }
                     }
 
                     launch {
@@ -730,35 +770,22 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
                 }
         }
 
-        if (isColorPickerUpdateEnabled && isColorPickerComposeEnabled) {
-            customizationOptionFloatingSheetViewMap
-                ?.get(ThemePickerHomeCustomizationOption.COLORS)
-                ?.let {
-                    (it as ComposeView).apply {
-                        // Make sure Composable lifecycle aligns with fragment lifecycle
-                        setViewCompositionStrategy(
-                            ViewCompositionStrategy.DisposeOnLifecycleDestroyed(lifecycleOwner)
+        customizationOptionFloatingSheetViewMap
+            ?.get(ThemePickerStyleCustomizationOption.COLORS)
+            ?.let {
+                (it as ComposeView).apply {
+                    // Make sure Composable lifecycle aligns with fragment lifecycle
+                    setViewCompositionStrategy(
+                        ViewCompositionStrategy.DisposeOnLifecycleDestroyed(lifecycleOwner)
+                    )
+                    setContent {
+                        ColorsSheet(
+                            optionsViewModel.darkModeViewModel,
+                            optionsViewModel.colorPickerViewModel2,
                         )
-                        setContent {
-                            ColorFloatingSheet(
-                                optionsViewModel.darkModeViewModel,
-                                optionsViewModel.colorPickerViewModel2,
-                            )
-                        }
                     }
                 }
-        } else {
-            customizationOptionFloatingSheetViewMap
-                ?.get(ThemePickerHomeCustomizationOption.COLORS)
-                ?.let {
-                    ColorsFloatingSheetBinder.bind(
-                        it,
-                        optionsViewModel,
-                        colorUpdateViewModel,
-                        lifecycleOwner,
-                    )
-                }
-        }
+            }
 
         customizationOptionFloatingSheetViewMap
             ?.get(ThemePickerHomeCustomizationOption.APP_ICONS)
@@ -783,16 +810,16 @@ constructor(private val defaultCustomizationOptionsBinder: DefaultCustomizationO
             )
         }
 
-        customizationOptionFloatingSheetViewMap?.get(ThemePickerHomeCustomizationOption.FONT)?.let {
-            FontFloatingSheetBinder.bind(
-                view = it,
-                optionsViewModel = optionsViewModel,
-                colorUpdateViewModel = colorUpdateViewModel,
-                lifecycleOwner = lifecycleOwner,
-                backgroundDispatcher = Dispatchers.IO,
-                launchFontFilePicker = launchFontFilePicker,
-            )
-        }
+        customizationOptionFloatingSheetViewMap
+            ?.get(ThemePickerStyleCustomizationOption.FONT)
+            ?.let {
+                FontFloatingSheetBinder.bind(
+                    view = it as ComposeView,
+                    optionsViewModel = optionsViewModel,
+                    lifecycleOwner = lifecycleOwner,
+                    launchFontFilePicker = launchFontFilePicker,
+                )
+            }
     }
 
     // Track the current show clock flag. If it turns from false to true, animate fade-in.
