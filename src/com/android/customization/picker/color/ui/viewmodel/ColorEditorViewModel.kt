@@ -134,7 +134,7 @@ class ColorEditorViewModel(
             .flowOn(backgroundDispatcher)
             .stateIn(scope, SharingStarted.WhileSubscribed(), null)
 
-    /** The four styles, each with the palette it builds from the seed of the draft */
+    /** Every [ColorStyle], each with the palette it builds from the seed of the draft */
     val styleOptions: Flow<List<StyleOptionViewModel>> =
         draft
             .map { it?.seed }

@@ -14,4 +14,5 @@ fun ColorStyle.label(): Int =
         ColorStyle.SOFT -> R.string.color_variant_option_label_soft
         ColorStyle.BRIGHT -> R.string.color_variant_option_label_bright
         ColorStyle.BOLD -> R.string.color_variant_option_label_bold
+        ColorStyle.TRUE -> R.string.color_variant_option_label_true
     }

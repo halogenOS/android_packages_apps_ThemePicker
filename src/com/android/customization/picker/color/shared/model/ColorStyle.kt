@@ -8,7 +8,8 @@ enum class ColorStyle(@ThemeStyle.Type val themeStyle: Int) {
     NEUTRAL(ThemeStyle.SPRITZ),
     SOFT(ThemeStyle.TONAL_SPOT),
     BRIGHT(ThemeStyle.VIBRANT),
-    BOLD(ThemeStyle.EXPRESSIVE);
+    BOLD(ThemeStyle.EXPRESSIVE),
+    TRUE(ThemeStyle.CONTENT);
 
     companion object {
         /** Returns the style building palettes with [themeStyle], or `null` when none does. */

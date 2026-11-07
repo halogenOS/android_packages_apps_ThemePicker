@@ -671,6 +671,13 @@
     -->
     <string name="color_variant_option_label_bold">Bold</string>
 
+    <!--
+    Label for an option in the color variant editor that applies a theme style preserving the exact colorfulness of the
+    chosen color.
+    [CHAR LIMIT=16].
+    -->
+    <string name="color_variant_option_label_true">True</string>
+
     <!-- Content description for a color variant editor apply button. The editor provides different
      color scheme options for theming the device based on a user-selected color seed.
 

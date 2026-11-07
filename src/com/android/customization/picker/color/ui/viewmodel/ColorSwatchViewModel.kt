@@ -68,7 +68,7 @@ data class ColorSwatchViewModel(
 ) {
     val fill: SwatchFill = option.toSwatchFill()
 
-    /** `null` for palettes that do not come from a seed and one of the four styles. */
+    /** `null` for palettes that do not come from a seed and a [ColorStyle]. */
     val details: ColorDetails? =
         ColorStyle.of(option.style)?.let { style ->
             SeedColor.ofOrNull(option.seedColor)?.let { seed -> ColorDetails(style, seed) }

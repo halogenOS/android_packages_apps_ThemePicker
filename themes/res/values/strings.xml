@@ -79,7 +79,7 @@
     <string name="color_style_orange" translatable="false">VIBRANT</string>
     <string name="color_style_deep_orange" translatable="false">VIBRANT</string>
     <string name="color_style_brown" translatable="false">VIBRANT</string>
-    <string name="color_style_grey" translatable="false">VIBRANT</string>
-    <string name="color_style_blue_grey" translatable="false">VIBRANT</string>
+    <string name="color_style_grey" translatable="false">CONTENT</string>
+    <string name="color_style_blue_grey" translatable="false">CONTENT</string>
     <string name="color_style_monochromatic" translatable="false">MONOCHROMATIC</string>
 </resources>
